@@ -5,7 +5,9 @@
       "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Owner\\\\Downloads\\\\sleestudio\\\\app\" -Recurse | Where-Object { !$_.PSIsContainer } | Select-Object FullName)",
       "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Owner\\\\Downloads\\\\sleestudio\\\\app\" -Recurse -File | ForEach-Object { $_.FullName })",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(npx tsc *)"
     ]
   }
 }
