@@ -12,16 +12,56 @@ const TONE_DESCRIPTIONS: Record<string, string> = {
 }
 
 const FORMAT_INSTRUCTIONS: Record<string, string> = {
-  standard: `Write a standard LinkedIn post: hook → body with key insights → call to action or closing thought.`,
-  hook_value: `Start with a single bold statement or question as the hook (1 line). Then deliver 3-5 punchy value points. Close with a CTA.`,
-  story: `Write a first-person micro-story: set the scene, describe the conflict/challenge, reveal the turning point, share the lesson. Keep it tight.`,
-  list: `Write a numbered list post. Start with a bold hook line. Then list 5-7 insight/tips, each 1-2 sentences. End with a brief summary or question.`,
-  poll: `Suggest an engaging LinkedIn poll. Write a provocative 1-line poll question, then provide 4 compelling answer options. Add 2-3 sentences of context above the poll.`,
+  story: `Write a first-person micro-story LinkedIn post.
+1. Hook: one punchy line that drops the reader into the scene
+2. Conflict: the challenge or problem you faced (2-3 lines)
+3. Turning point: the moment everything changed (2-3 lines)
+4. Lesson: the universal takeaway that applies to the reader (2-3 lines)
+5. Close with a question that invites the reader to share their own experience
+Keep it tight, personal, and emotionally resonant.`,
+
+  listicle: `Write a numbered list LinkedIn post.
+1. Bold hook line that promises specific, countable value
+2. 5-7 numbered items — each a sharp insight or tip (1-2 sentences each)
+3. A brief "bottom line" or thought-provoking question at the end
+Make every item stand alone. No fluff — every line earns its place.`,
+
+  framework: `Write a framework-style LinkedIn post that teaches a clear mental model or system.
+1. Hook: name the problem this framework solves
+2. Introduce the framework with a memorable name or acronym
+3. Break it into 3-4 components or steps, each with a 1-line explanation
+4. Show a quick real-world example
+5. CTA: challenge the reader to apply it today
+Make it feel like a mini-lesson the reader can immediately use.`,
+
+  contrarian: `Write a contrarian LinkedIn post that challenges a widely-held belief.
+1. Open by stating the conventional wisdom (set it up before knocking it down)
+2. Drop the contrarian take — bold, direct, no hedging
+3. Back it up with 2-3 sharp reasons or evidence points
+4. Acknowledge the nuance (you're not saying the consensus is always wrong)
+5. Close with a question that makes the reader question their own assumptions
+Be provocative but grounded — not edgy for its own sake.`,
+
+  data_insight: `Write a data-driven insight LinkedIn post.
+1. Hook: lead with a surprising stat or data point (label it as illustrative if not citing a real source)
+2. Unpack what the data actually means (2-3 lines)
+3. Surface a counterintuitive insight most people miss
+4. Practical implication: what should the reader DO differently based on this?
+5. Close with a question asking readers to share their own experience or data
+Make it feel like insider knowledge, not a press release.`,
+
+  quick_win: `Write a "quick win" LinkedIn post that delivers immediate actionable value.
+1. Hook: one line that promises a specific, fast result
+2. The single most valuable tip or action (2-3 lines)
+3. A micro-breakdown of 3-4 bullet points or numbered steps
+4. The result the reader can expect
+5. Close with: "Try this today and tell me what happens"
+Keep total length under 800 characters. Short. Sharp. Implementable in minutes.`,
 }
 
 function buildPrompt(topic: string, tone: string, format: string, audience: string): string {
   const toneDesc = TONE_DESCRIPTIONS[tone] ?? tone
-  const formatInstructions = FORMAT_INSTRUCTIONS[format] ?? FORMAT_INSTRUCTIONS.standard
+  const formatInstructions = FORMAT_INSTRUCTIONS[format] ?? FORMAT_INSTRUCTIONS.listicle
 
   return `You are an expert LinkedIn content strategist who has helped hundreds of professionals build massive followings. Generate a LinkedIn post that will stop the scroll and drive real engagement.
 
@@ -38,7 +78,6 @@ ${formatInstructions}
 - 2-4 emojis max, placed strategically — never randomly sprinkled
 - End with either a direct question (drives comments) or a bold CTA
 - Write like a human, not a marketer
-- Stay under 1,300 characters for maximum algorithmic reach
 
 Output ONLY the post text — no preamble, no "Here's a post:", no explanations. Ready to copy-paste.`
 }
@@ -53,15 +92,14 @@ export async function POST(request: NextRequest) {
     }
 
     const stream = anthropic.messages.stream({
-      model: 'claude-opus-4-7',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 1024,
-      thinking: { type: 'adaptive' },
       messages: [{
         role: 'user',
         content: buildPrompt(
           topic.trim(),
           tone || 'professional',
-          format || 'standard',
+          format || 'listicle',
           (audience || '').trim(),
         ),
       }],
