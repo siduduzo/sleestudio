@@ -102,7 +102,7 @@ export default function Home() {
           </div>
           <div>
             <h1 className="text-lg font-semibold text-gray-900 leading-tight">
-              LinkedIn Content Engine
+              Zoltha
             </h1>
             <p className="text-xs text-gray-500">AI-powered posts that drive real engagement</p>
           </div>

@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LinkedIn Content Engine",
-  description: "AI-powered LinkedIn posts that drive real engagement",
+  title: "Zoltha",
+  description: "Zoltha — AI-powered LinkedIn posts that drive real engagement",
 };
 
 export default function RootLayout({
