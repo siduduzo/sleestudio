@@ -24,3 +24,13 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@keyframes blob-drift {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  33%       { transform: translate(55px, -35px) scale(1.1); }
+  66%       { transform: translate(-35px, 28px) scale(0.92); }
+}
+
+.blob        { animation: blob-drift 12s ease-in-out infinite; }
+.blob-slow   { animation: blob-drift 16s ease-in-out infinite 3s; }
+.blob-slower { animation: blob-drift 20s ease-in-out infinite 6s; }
