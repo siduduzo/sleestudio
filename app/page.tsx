@@ -332,6 +332,94 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Pricing ── */}
+      <section className="relative z-10 px-6 pb-28">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Simple pricing.</h2>
+            <p className="text-white/35">Start free. Upgrade when you&apos;re ready.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
+
+            {/* Free */}
+            <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-8 flex flex-col">
+              <div className="mb-8">
+                <p className="text-xs font-semibold text-white/40 uppercase tracking-widest mb-3">Free</p>
+                <div className="flex items-end gap-1 mb-1">
+                  <span className="text-5xl font-black text-white">$0</span>
+                  <span className="text-white/35 mb-2">/month</span>
+                </div>
+                <p className="text-sm text-white/35">Get started with no commitment.</p>
+              </div>
+
+              <ul className="space-y-3.5 mb-10 flex-1">
+                {[
+                  '5 generations per day',
+                  'All 6 post formats',
+                  'Copy to clipboard',
+                ].map((f) => (
+                  <li key={f} className="flex items-center gap-3 text-sm text-white/60">
+                    <span className="w-4 h-4 rounded-full border border-white/20 flex items-center justify-center flex-shrink-0 text-[10px] text-white/40">✓</span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+
+              <Link
+                href="/generate"
+                className="block text-center py-3.5 rounded-xl border border-white/15 text-white/70 font-semibold text-sm hover:bg-white/[0.06] transition-colors"
+              >
+                Get started free
+              </Link>
+            </div>
+
+            {/* Pro — highlighted */}
+            <div className="rounded-3xl border border-[#0077b5]/50 bg-gradient-to-b from-[#0077b5]/12 to-transparent p-8 flex flex-col relative overflow-hidden">
+              {/* Glow */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-24 bg-[#0077b5]/25 blur-[60px] pointer-events-none" />
+
+              <div className="relative mb-8">
+                <div className="flex items-center gap-2 mb-3">
+                  <p className="text-xs font-semibold text-[#38bdf8] uppercase tracking-widest">Pro</p>
+                  <span className="px-2 py-0.5 rounded-full bg-[#0077b5]/30 border border-[#0077b5]/40 text-[10px] font-bold text-[#38bdf8]">
+                    MOST POPULAR
+                  </span>
+                </div>
+                <div className="flex items-end gap-1 mb-1">
+                  <span className="text-5xl font-black text-white">$19</span>
+                  <span className="text-white/35 mb-2">/month</span>
+                </div>
+                <p className="text-sm text-white/35">Everything you need to stay consistent.</p>
+              </div>
+
+              <ul className="relative space-y-3.5 mb-10 flex-1">
+                {[
+                  'Unlimited generations',
+                  'All 6 post formats',
+                  'Save post history',
+                  'Custom tone presets',
+                  'Priority speed',
+                ].map((f) => (
+                  <li key={f} className="flex items-center gap-3 text-sm text-white/80">
+                    <span className="w-4 h-4 rounded-full bg-[#0077b5]/40 border border-[#0077b5]/60 flex items-center justify-center flex-shrink-0 text-[10px] text-[#38bdf8]">✓</span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+
+              <Link
+                href="/generate"
+                className="relative block text-center py-3.5 rounded-xl bg-[#0077b5] hover:bg-[#0088cc] text-white font-bold text-sm transition-all active:scale-[0.98] shadow-xl shadow-[#0077b5]/30"
+              >
+                ✦ Start with Pro
+              </Link>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
       {/* ── CTA banner ── */}
       <section className="relative z-10 px-6 pb-28">
         <div className="max-w-3xl mx-auto rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.05] to-transparent p-14 text-center relative overflow-hidden">
