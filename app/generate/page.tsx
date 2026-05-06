@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import Link from 'next/link'
+import { UserButton } from '@clerk/nextjs'
 
 const TONES = [
   { value: 'professional', label: 'Professional', emoji: '💼' },
@@ -100,13 +102,21 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
-        <div className="max-w-[1400px] mx-auto px-6 py-4 flex items-center gap-3">
-          <div className="w-8 h-8 bg-[#0077b5] rounded flex items-center justify-center flex-shrink-0">
-            <span className="text-white text-sm font-bold leading-none">in</span>
+        <div className="max-w-[1400px] mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-[#0077b5] rounded flex items-center justify-center flex-shrink-0">
+              <span className="text-white text-sm font-bold leading-none">Z</span>
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold text-gray-900 leading-tight">Zoltha</h1>
+              <p className="text-xs text-gray-500">AI-powered posts that drive real engagement</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900 leading-tight">Zoltha</h1>
-            <p className="text-xs text-gray-500">AI-powered posts that drive real engagement</p>
+          <div className="flex items-center gap-4">
+            <Link href="/" className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
+              ← Home
+            </Link>
+            <UserButton afterSignOutUrl="/" />
           </div>
         </div>
       </header>

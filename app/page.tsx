@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import NavUser from './components/NavUser'
 
 const STATS = [
   { number: '6', label: 'formats', sub: 'generated at once' },
@@ -149,12 +150,15 @@ export default function LandingPage() {
             </div>
             <span className="text-lg font-semibold tracking-tight">Zoltha</span>
           </div>
-          <Link
-            href="/generate"
-            className="px-4 py-2 text-sm font-medium bg-white/[0.07] hover:bg-white/[0.12] rounded-lg border border-white/10 transition-colors"
-          >
-            Open app →
-          </Link>
+          <div className="flex items-center gap-3">
+            <NavUser />
+            <Link
+              href="/generate"
+              className="px-4 py-2 text-sm font-medium bg-white/[0.07] hover:bg-white/[0.12] rounded-lg border border-white/10 transition-colors"
+            >
+              Open app →
+            </Link>
+          </div>
         </div>
       </nav>
 
