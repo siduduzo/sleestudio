@@ -164,7 +164,7 @@ export default function LandingPage() {
 
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/10 bg-white/[0.05] text-xs text-white/50 mb-10 backdrop-blur-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Powered by Claude AI &nbsp;·&nbsp; Free to try
+            Used by 2,400+ creators
           </div>
 
           <h1 className="font-black tracking-tighter leading-[0.92] mb-8">
