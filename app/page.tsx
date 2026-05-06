@@ -1,303 +1,167 @@
-'use client'
-
-import { useState, useRef } from 'react'
-
-const TONES = [
-  { value: 'professional', label: 'Professional', emoji: '💼' },
-  { value: 'casual', label: 'Casual', emoji: '😊' },
-  { value: 'inspiring', label: 'Inspiring', emoji: '✨' },
-  { value: 'educational', label: 'Educational', emoji: '📚' },
-  { value: 'controversial', label: 'Controversial', emoji: '🔥' },
-]
+import Link from 'next/link'
 
 const FORMATS = [
-  { value: 'story',        label: 'Story',        badge: 'bg-purple-50 text-purple-700', cursor: 'bg-purple-400' },
-  { value: 'listicle',     label: 'Listicle',     badge: 'bg-blue-50 text-blue-700',     cursor: 'bg-blue-400'   },
-  { value: 'framework',    label: 'Framework',    badge: 'bg-teal-50 text-teal-700',     cursor: 'bg-teal-400'   },
-  { value: 'contrarian',   label: 'Contrarian',   badge: 'bg-rose-50 text-rose-700',     cursor: 'bg-rose-400'   },
-  { value: 'data_insight', label: 'Data Insight', badge: 'bg-amber-50 text-amber-700',   cursor: 'bg-amber-400'  },
-  { value: 'quick_win',    label: 'Quick Win',    badge: 'bg-emerald-50 text-emerald-700', cursor: 'bg-emerald-400' },
+  {
+    label: 'Story',
+    description: 'Turn your experience into a narrative that keeps readers scrolling.',
+    icon: '📖',
+    color: 'from-purple-500/20 to-purple-500/5',
+    border: 'border-purple-500/30',
+    tag: 'bg-purple-500/20 text-purple-300',
+  },
+  {
+    label: 'Listicle',
+    description: 'Scannable numbered insights that get saved and reshared.',
+    icon: '📋',
+    color: 'from-blue-500/20 to-blue-500/5',
+    border: 'border-blue-500/30',
+    tag: 'bg-blue-500/20 text-blue-300',
+  },
+  {
+    label: 'Framework',
+    description: 'A repeatable system or mental model your audience can apply today.',
+    icon: '🏗️',
+    color: 'from-teal-500/20 to-teal-500/5',
+    border: 'border-teal-500/30',
+    tag: 'bg-teal-500/20 text-teal-300',
+  },
+  {
+    label: 'Contrarian',
+    description: 'Challenge the conventional wisdom and spark debate in the comments.',
+    icon: '🔥',
+    color: 'from-rose-500/20 to-rose-500/5',
+    border: 'border-rose-500/30',
+    tag: 'bg-rose-500/20 text-rose-300',
+  },
+  {
+    label: 'Data Insight',
+    description: 'Back your take with numbers. Stats-driven posts earn serious authority.',
+    icon: '📊',
+    color: 'from-amber-500/20 to-amber-500/5',
+    border: 'border-amber-500/30',
+    tag: 'bg-amber-500/20 text-amber-300',
+  },
+  {
+    label: 'Quick Win',
+    description: 'One actionable tip readers can use in the next five minutes.',
+    icon: '⚡',
+    color: 'from-emerald-500/20 to-emerald-500/5',
+    border: 'border-emerald-500/30',
+    tag: 'bg-emerald-500/20 text-emerald-300',
+  },
 ]
 
-const OPTIMAL_CHARS = 1300
-const MAX_CHARS = 3000
-
-type PostState = { text: string; isGenerating: boolean; copied: boolean; error: string }
-
-const EMPTY_POST: PostState = { text: '', isGenerating: false, copied: false, error: '' }
-
-function initPosts(): Record<string, PostState> {
-  return Object.fromEntries(FORMATS.map(f => [f.value, { ...EMPTY_POST }]))
-}
-
-export default function Home() {
-  const [topic, setTopic]       = useState('')
-  const [tone, setTone]         = useState('professional')
-  const [audience, setAudience] = useState('')
-  const [posts, setPosts]       = useState<Record<string, PostState>>(initPosts)
-  const abortRef = useRef<AbortController | null>(null)
-
-  const isAnyGenerating = Object.values(posts).some(p => p.isGenerating)
-
-  async function generate() {
-    if (!topic.trim() || isAnyGenerating) return
-
-    abortRef.current?.abort()
-    abortRef.current = new AbortController()
-    const ctrl = abortRef.current
-
-    setPosts(Object.fromEntries(FORMATS.map(f => [f.value, { text: '', isGenerating: true, copied: false, error: '' }])))
-
-    FORMATS.forEach(async (format) => {
-      try {
-        const res = await fetch('/api/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ topic: topic.trim(), tone, format: format.value, audience: audience.trim() }),
-          signal: ctrl.signal,
-        })
-
-        if (!res.ok) {
-          const data = await res.json()
-          throw new Error(data.error || 'Generation failed')
-        }
-
-        const reader = res.body!.getReader()
-        const decoder = new TextDecoder()
-
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-          setPosts(prev => ({
-            ...prev,
-            [format.value]: { ...prev[format.value], text: prev[format.value].text + decoder.decode(value, { stream: true }) },
-          }))
-        }
-      } catch (err: unknown) {
-        if (err instanceof Error && err.name !== 'AbortError') {
-          setPosts(prev => ({
-            ...prev,
-            [format.value]: { ...prev[format.value], isGenerating: false, error: err.message },
-          }))
-        }
-        return
-      }
-      setPosts(prev => ({ ...prev, [format.value]: { ...prev[format.value], isGenerating: false } }))
-    })
-  }
-
-  async function copyPost(formatValue: string) {
-    const text = posts[formatValue].text
-    if (!text) return
-    await navigator.clipboard.writeText(text)
-    setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], copied: true } }))
-    setTimeout(() => {
-      setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], copied: false } }))
-    }, 2000)
-  }
-
+export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-[1400px] mx-auto px-6 py-4 flex items-center gap-3">
-          <div className="w-8 h-8 bg-[#0077b5] rounded flex items-center justify-center flex-shrink-0">
-            <span className="text-white text-sm font-bold leading-none">in</span>
+    <div className="min-h-screen bg-[#0a0a0f] text-white">
+      {/* Nav */}
+      <nav className="border-b border-white/5 backdrop-blur-sm sticky top-0 z-50 bg-[#0a0a0f]/80">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0077b5] to-[#004f7c] flex items-center justify-center flex-shrink-0">
+              <span className="text-white text-sm font-bold">Z</span>
+            </div>
+            <span className="text-lg font-semibold tracking-tight">Zoltha</span>
           </div>
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900 leading-tight">Zoltha</h1>
-            <p className="text-xs text-gray-500">AI-powered posts that drive real engagement</p>
-          </div>
+          <Link
+            href="/generate"
+            className="px-4 py-2 text-sm font-medium bg-white/10 hover:bg-white/15 rounded-lg border border-white/10 transition-colors"
+          >
+            Open app →
+          </Link>
         </div>
-      </header>
+      </nav>
 
-      <main className="max-w-[1400px] mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-8 items-start">
+      {/* Hero */}
+      <section className="relative overflow-hidden pt-24 pb-32 px-6">
+        {/* Background glow */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#0077b5]/15 rounded-full blur-[120px]" />
+        </div>
 
-          {/* ── Left: Input Panel ── */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-5 lg:sticky lg:top-6">
-            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Content Brief</h2>
+        <div className="relative max-w-4xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-xs text-white/60 mb-8">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Powered by Claude AI
+          </div>
 
-            {/* Topic */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Topic / Idea <span className="text-red-400">*</span>
-              </label>
-              <textarea
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) generate() }}
-                placeholder="e.g. How I landed 3 clients from a single LinkedIn post with zero followers..."
-                className="w-full h-28 px-3 py-2.5 text-sm border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#0077b5]/40 focus:border-[#0077b5] placeholder-gray-400 transition-colors"
-              />
-            </div>
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05] mb-6">
+            6 LinkedIn posts.{' '}
+            <span className="bg-gradient-to-r from-[#0077b5] to-[#38bdf8] bg-clip-text text-transparent">
+              One prompt.
+            </span>
+          </h1>
 
-            {/* Audience */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Target Audience</label>
-              <input
-                type="text"
-                value={audience}
-                onChange={(e) => setAudience(e.target.value)}
-                placeholder="e.g. SaaS founders, job seekers, startup engineers..."
-                className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0077b5]/40 focus:border-[#0077b5] placeholder-gray-400 transition-colors"
-              />
-            </div>
+          <p className="text-lg sm:text-xl text-white/50 max-w-2xl mx-auto mb-10 leading-relaxed">
+            Zoltha generates six high-engagement post formats simultaneously — story, listicle, framework, contrarian, data insight, and quick win — so you always have the right angle.
+          </p>
 
-            {/* Tone */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Tone</label>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3">
-                {TONES.map((t) => (
-                  <button
-                    key={t.value}
-                    onClick={() => setTone(t.value)}
-                    className={`px-3 py-2 text-sm rounded-lg border text-left transition-all ${
-                      tone === t.value
-                        ? 'bg-[#0077b5] border-[#0077b5] text-white shadow-sm'
-                        : 'border-gray-200 text-gray-600 hover:border-[#0077b5] hover:text-[#0077b5] bg-white'
-                    }`}
-                  >
-                    <span className="mr-1.5">{t.emoji}</span>
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+          <Link
+            href="/generate"
+            className="inline-flex items-center gap-2.5 px-8 py-4 rounded-xl bg-[#0077b5] hover:bg-[#006097] text-white font-semibold text-base transition-all active:scale-[0.98] shadow-lg shadow-[#0077b5]/30"
+          >
+            ✦ Generate your posts
+            <span className="text-white/70">→</span>
+          </Link>
 
-            {/* Generate */}
-            <button
-              onClick={generate}
-              disabled={!topic.trim() || isAnyGenerating}
-              className="w-full py-3 rounded-lg bg-[#0077b5] text-white font-semibold text-sm transition-all hover:bg-[#006097] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
-            >
-              {isAnyGenerating ? (
-                <>
-                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  Generating 6 posts...
-                </>
-              ) : (
-                '✦ Generate All 6 Posts'
-              )}
-            </button>
+          <p className="mt-4 text-xs text-white/30">No sign-up required. Free to try.</p>
+        </div>
+      </section>
 
-            <p className="text-xs text-center text-gray-400">
-              Tip: Press{' '}
-              <kbd className="px-1 py-0.5 bg-gray-100 rounded text-gray-500 font-mono">⌘ Enter</kbd>{' '}
-              to generate
+      {/* Features — 6 formats */}
+      <section className="px-6 pb-28">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Six formats. Zero guesswork.</h2>
+            <p className="text-white/50 max-w-xl mx-auto">
+              Every topic has multiple angles. Zoltha writes all of them at once so you can pick what lands best with your audience.
             </p>
-
-            {/* Format legend */}
-            <div className="pt-2 border-t border-gray-100">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Generates all formats</p>
-              <div className="flex flex-wrap gap-1.5">
-                {FORMATS.map(f => (
-                  <span key={f.value} className={`text-xs px-2 py-0.5 rounded-full font-medium ${f.badge}`}>
-                    {f.label}
-                  </span>
-                ))}
-              </div>
-            </div>
           </div>
 
-          {/* ── Right: 6-card Grid ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {FORMATS.map((format) => {
-              const post = posts[format.value]
-              const charCount = post.text.length
-              const charColor =
-                charCount > MAX_CHARS
-                  ? 'text-red-500'
-                  : charCount > OPTIMAL_CHARS
-                    ? 'text-amber-500'
-                    : 'text-emerald-600'
-
-              return (
-                <div key={format.value} className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col min-h-64">
-                  {/* Card header */}
-                  <div className="flex items-center justify-between mb-3">
-                    <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${format.badge}`}>
-                      {format.label}
-                    </span>
-                    {post.text && (
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xs font-mono tabular-nums ${charColor}`}>
-                          {charCount}
-                          <span className="text-gray-400">/{OPTIMAL_CHARS}</span>
-                        </span>
-                        <button
-                          onClick={() => copyPost(format.value)}
-                          className={`px-2.5 py-1 rounded-lg border text-xs font-medium transition-all ${
-                            post.copied
-                              ? 'bg-emerald-50 border-emerald-200 text-emerald-600'
-                              : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                          }`}
-                        >
-                          {post.copied ? '✓ Copied' : '⎘ Copy'}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Error */}
-                  {post.error && (
-                    <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-600">
-                      {post.error}
-                    </div>
-                  )}
-
-                  {/* Empty state */}
-                  {!post.text && !post.isGenerating && !post.error && (
-                    <div className="flex-1 flex items-center justify-center text-gray-300 text-sm select-none">
-                      —
-                    </div>
-                  )}
-
-                  {/* Loading skeleton */}
-                  {post.isGenerating && !post.text && (
-                    <div className="flex-1 space-y-2.5 pt-1">
-                      {[80, 100, 60, 90, 50, 75].map((w, i) => (
-                        <div
-                          key={i}
-                          className="h-3 bg-gray-100 rounded animate-pulse"
-                          style={{ width: `${w}%` }}
-                        />
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Post text */}
-                  {post.text && (
-                    <div className="flex-1 text-xs text-gray-800 leading-relaxed whitespace-pre-wrap">
-                      {post.text}
-                      {post.isGenerating && (
-                        <span className={`inline-block w-0.5 h-[1em] ml-0.5 align-middle animate-pulse ${format.cursor}`} />
-                      )}
-                    </div>
-                  )}
-
-                  {/* Char count bar */}
-                  {post.text && !post.isGenerating && (
-                    <div className="mt-3 pt-3 border-t border-gray-100">
-                      <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-300 ${
-                            charCount > MAX_CHARS ? 'bg-red-400' : charCount > OPTIMAL_CHARS ? 'bg-amber-400' : 'bg-emerald-400'
-                          }`}
-                          style={{ width: `${Math.min(100, (charCount / MAX_CHARS) * 100)}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {FORMATS.map((f) => (
+              <div
+                key={f.label}
+                className={`relative rounded-2xl border ${f.border} bg-gradient-to-b ${f.color} p-6 group hover:border-white/20 transition-colors`}
+              >
+                <div className="mb-4 text-3xl">{f.icon}</div>
+                <div className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full mb-3 ${f.tag}`}>
+                  {f.label}
                 </div>
-              )
-            })}
+                <p className="text-sm text-white/60 leading-relaxed">{f.description}</p>
+              </div>
+            ))}
           </div>
         </div>
-      </main>
+      </section>
+
+      {/* CTA banner */}
+      <section className="px-6 pb-28">
+        <div className="max-w-3xl mx-auto rounded-3xl border border-white/10 bg-white/5 p-12 text-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0077b5]/10 to-transparent pointer-events-none" />
+          <h2 className="relative text-3xl sm:text-4xl font-bold mb-4">Ready to write less,{' '}post more?</h2>
+          <p className="relative text-white/50 mb-8">Drop your idea in. Get six polished posts back in seconds.</p>
+          <Link
+            href="/generate"
+            className="relative inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-[#0077b5] hover:bg-[#006097] text-white font-semibold transition-all active:scale-[0.98] shadow-lg shadow-[#0077b5]/30"
+          >
+            ✦ Start generating
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-white/5 px-6 py-8">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-white/30">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded bg-gradient-to-br from-[#0077b5] to-[#004f7c] flex items-center justify-center">
+              <span className="text-white text-[10px] font-bold">Z</span>
+            </div>
+            <span>Zoltha</span>
+          </div>
+          <p>AI-powered LinkedIn content engine</p>
+        </div>
+      </footer>
     </div>
   )
 }
