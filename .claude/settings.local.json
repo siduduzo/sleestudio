@@ -7,7 +7,25 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Owner\\\\Downloads\\\\sleestudio\" -Depth 2 | Where-Object { $_.Extension -match '\\\\.\\(tsx|ts|js|jsx|css\\)$' -or $_.PSIsContainer } | Select-Object FullName, PSIsContainer | Format-Table -AutoSize)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Owner\\\\Downloads\\\\sleestudio\\\\app\" -Recurse | Where-Object { $_.Extension -match '\\\\.\\(tsx|ts|js|jsx|css\\)$' } | Select-Object FullName | Format-Table -AutoSize)",
+      "PowerShell(Copy-Item *)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Owner\\\\Downloads\\\\sleestudio\\\\node_modules\\\\next\\\\dist\\\\docs\\\\01-app\\\\03-api-reference\" -Name | Where-Object { $_ -match \"middleware\" })",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Owner\\\\Downloads\\\\sleestudio\\\\node_modules\\\\next\\\\dist\\\\docs\\\\01-app\\\\03-api-reference\" -Recurse -Name | Where-Object { $_ -match \"middleware\" })",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Owner\\\\Downloads\\\\sleestudio\\\\node_modules\\\\next\\\\dist\\\\docs\\\\01-app\\\\03-api-reference\\\\03-file-conventions\" -Name | Where-Object { $_ -match \"middleware\" })",
+      "PowerShell($pkg = Get-Content \"C:\\\\Users\\\\Owner\\\\Downloads\\\\sleestudio\\\\node_modules\\\\@clerk\\\\nextjs\\\\package.json\" -Raw | ConvertFrom-Json; Write-Output \"Version: $\\($pkg.version\\)\"; $pkg.peerDependencies)",
+      "PowerShell($exports = Get-Content \"C:\\\\Users\\\\Owner\\\\Downloads\\\\sleestudio\\\\node_modules\\\\@clerk\\\\nextjs\\\\package.json\" -Raw | ConvertFrom-Json; $exports.exports.PSObject.Properties | Select-Object Name, Value | Format-Table -AutoSize)",
+      "Bash(git mv *)",
+      "Bash(git commit *)",
+      "Bash(dir C:UsersOwnerDownloadssleestudioapp *)",
+      "Bash(dir \"C:\\\\Users\\\\Owner\\\\Downloads\\\\sleestudio\")",
+      "Bash(npm run *)",
+      "Bash(xargs cat)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/)",
+      "Bash(curl -s -o /dev/null -w \" %{http_code}\" http://localhost:3000/generate)",
+      "Bash(curl -s -o /dev/null -w \"landing:%{http_code}\" http://localhost:3000)",
+      "Bash(curl -s -o /dev/null -w \"generate:%{http_code}\" http://localhost:3000/generate)"
     ]
   }
 }

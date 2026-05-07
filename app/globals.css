@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #050508;
+  --foreground: #ffffff;
 }
 
 @theme inline {
@@ -12,25 +12,66 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }
 
+/* ── Dot grid overlay ───────────────────────────────── */
+.grid-bg {
+  background-image: radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+/* ── Blob drift ─────────────────────────────────────── */
 @keyframes blob-drift {
-  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  0%, 100% { transform: translate(0, 0) scale(1); }
   33%       { transform: translate(55px, -35px) scale(1.1); }
   66%       { transform: translate(-35px, 28px) scale(0.92); }
 }
-
 .blob        { animation: blob-drift 12s ease-in-out infinite; }
 .blob-slow   { animation: blob-drift 16s ease-in-out infinite 3s; }
 .blob-slower { animation: blob-drift 20s ease-in-out infinite 6s; }
+
+/* ── Skeleton shimmer ───────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.04) 25%,
+    rgba(255,255,255,0.09) 50%,
+    rgba(255,255,255,0.04) 75%
+  );
+  background-size: 600px 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ── Animated gradient headline ─────────────────────── */
+@keyframes gradient-pan {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
+.gradient-pan {
+  background-size: 200% 200%;
+  animation: gradient-pan 6s ease-in-out infinite;
+}
+
+/* ── Hero staggered fade-up ─────────────────────────── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up-1 { animation: fade-up 0.85s cubic-bezier(0.16,1,0.3,1) 0.05s both; }
+.fade-up-2 { animation: fade-up 0.85s cubic-bezier(0.16,1,0.3,1) 0.18s both; }
+.fade-up-3 { animation: fade-up 0.85s cubic-bezier(0.16,1,0.3,1) 0.31s both; }
+.fade-up-4 { animation: fade-up 0.85s cubic-bezier(0.16,1,0.3,1) 0.44s both; }
+.fade-up-5 { animation: fade-up 0.85s cubic-bezier(0.16,1,0.3,1) 0.57s both; }
+
+/* ── Scrollbar ──────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.13); }
