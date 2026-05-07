@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
       max_tokens: 64,
       messages: [{
         role: 'user',
-        content: `Given this LinkedIn post, return exactly 3 relevant hashtags as a JSON array of strings. Do NOT include the # symbol. Only return the JSON array, nothing else.\n\nPost:\n${text.slice(0, 1200)}`,
+        content: `Given this LinkedIn post, return exactly 3 relevant hashtags as a JSON array of strings. Do NOT include the # symbol. Return plain text hashtag words only — no markdown, no asterisks, no formatting. Only return the JSON array, nothing else.\n\nPost:\n${text.slice(0, 1200)}`,
       }],
     })
 

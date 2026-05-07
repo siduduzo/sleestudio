@@ -79,6 +79,13 @@ ${formatInstructions}
 - End with either a direct question (drives comments) or a bold CTA
 - Write like a human, not a marketer
 
+**STRICT FORMATTING RULE — NO MARKDOWN WHATSOEVER:**
+- No asterisks (* or **) for bold or emphasis
+- No ## or # headers
+- No bullet dashes (- or –) at the start of lines
+- No markdown of any kind
+- LinkedIn renders plain text only — use line breaks to create visual structure, nothing else
+
 Output ONLY the post text — no preamble, no "Here's a post:", no explanations. Ready to copy-paste.`
 }
 
