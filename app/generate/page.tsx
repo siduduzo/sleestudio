@@ -24,9 +24,24 @@ const FORMATS = [
 const OPTIMAL_CHARS = 1300
 const MAX_CHARS = 3000
 
-type PostState = { text: string; isGenerating: boolean; copied: boolean; error: string }
+type PostState = {
+  text: string
+  isGenerating: boolean
+  copied: boolean
+  error: string
+  hashtags: string[]
+  isLoadingHashtags: boolean
+  hooks: string[]
+  isLoadingHooks: boolean
+  showHooks: boolean
+  copiedHookIndex: number | null
+}
 
-const EMPTY_POST: PostState = { text: '', isGenerating: false, copied: false, error: '' }
+const EMPTY_POST: PostState = {
+  text: '', isGenerating: false, copied: false, error: '',
+  hashtags: [], isLoadingHashtags: false,
+  hooks: [], isLoadingHooks: false, showHooks: false, copiedHookIndex: null,
+}
 
 function initPosts(): Record<string, PostState> {
   return Object.fromEntries(FORMATS.map(f => [f.value, { ...EMPTY_POST }]))
@@ -41,21 +56,44 @@ export default function Home() {
 
   const isAnyGenerating = Object.values(posts).some(p => p.isGenerating)
 
+  async function fetchHashtags(formatValue: string, text: string) {
+    setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], isLoadingHashtags: true } }))
+    try {
+      const res = await fetch('/api/hashtags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      })
+      if (res.ok) {
+        const { hashtags } = await res.json()
+        setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], hashtags, isLoadingHashtags: false } }))
+      } else {
+        setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], isLoadingHashtags: false } }))
+      }
+    } catch {
+      setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], isLoadingHashtags: false } }))
+    }
+  }
+
   async function generate() {
     if (!topic.trim() || isAnyGenerating) return
 
     abortRef.current?.abort()
     abortRef.current = new AbortController()
     const ctrl = abortRef.current
+    const capturedTopic = topic.trim()
+    const capturedTone = tone
+    const capturedAudience = audience.trim()
 
-    setPosts(Object.fromEntries(FORMATS.map(f => [f.value, { text: '', isGenerating: true, copied: false, error: '' }])))
+    setPosts(Object.fromEntries(FORMATS.map(f => [f.value, { ...EMPTY_POST, isGenerating: true }])))
 
     FORMATS.forEach(async (format) => {
+      let accumulatedText = ''
       try {
         const res = await fetch('/api/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ topic: topic.trim(), tone, format: format.value, audience: audience.trim() }),
+          body: JSON.stringify({ topic: capturedTopic, tone: capturedTone, format: format.value, audience: capturedAudience }),
           signal: ctrl.signal,
         })
 
@@ -70,9 +108,11 @@ export default function Home() {
         while (true) {
           const { done, value } = await reader.read()
           if (done) break
+          const chunk = decoder.decode(value, { stream: true })
+          accumulatedText += chunk
           setPosts(prev => ({
             ...prev,
-            [format.value]: { ...prev[format.value], text: prev[format.value].text + decoder.decode(value, { stream: true }) },
+            [format.value]: { ...prev[format.value], text: prev[format.value].text + chunk },
           }))
         }
       } catch (err: unknown) {
@@ -85,7 +125,79 @@ export default function Home() {
         return
       }
       setPosts(prev => ({ ...prev, [format.value]: { ...prev[format.value], isGenerating: false } }))
+      if (accumulatedText) fetchHashtags(format.value, accumulatedText)
     })
+  }
+
+  async function regenerateSingle(formatValue: string) {
+    if (!topic.trim() || posts[formatValue].isGenerating) return
+
+    setPosts(prev => ({ ...prev, [formatValue]: { ...EMPTY_POST, isGenerating: true } }))
+
+    let accumulatedText = ''
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: topic.trim(), tone, format: formatValue, audience: audience.trim() }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Generation failed')
+      }
+
+      const reader = res.body!.getReader()
+      const decoder = new TextDecoder()
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        const chunk = decoder.decode(value, { stream: true })
+        accumulatedText += chunk
+        setPosts(prev => ({
+          ...prev,
+          [formatValue]: { ...prev[formatValue], text: prev[formatValue].text + chunk },
+        }))
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setPosts(prev => ({
+          ...prev,
+          [formatValue]: { ...prev[formatValue], isGenerating: false, error: err.message },
+        }))
+      }
+      return
+    }
+    setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], isGenerating: false } }))
+    if (accumulatedText) fetchHashtags(formatValue, accumulatedText)
+  }
+
+  async function optimizeHook(formatValue: string) {
+    const post = posts[formatValue]
+    if (!post.text || post.isLoadingHooks) return
+
+    if (post.showHooks) {
+      setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], showHooks: false } }))
+      return
+    }
+
+    setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], isLoadingHooks: true, showHooks: true } }))
+    try {
+      const res = await fetch('/api/hooks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: post.text, tone }),
+      })
+      if (res.ok) {
+        const { hooks } = await res.json()
+        setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], hooks, isLoadingHooks: false } }))
+      } else {
+        setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], isLoadingHooks: false, showHooks: false } }))
+      }
+    } catch {
+      setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], isLoadingHooks: false, showHooks: false } }))
+    }
   }
 
   async function copyPost(formatValue: string) {
@@ -95,6 +207,14 @@ export default function Home() {
     setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], copied: true } }))
     setTimeout(() => {
       setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], copied: false } }))
+    }, 2000)
+  }
+
+  async function copyHook(formatValue: string, index: number, hookText: string) {
+    await navigator.clipboard.writeText(hookText)
+    setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], copiedHookIndex: index } }))
+    setTimeout(() => {
+      setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], copiedHookIndex: null } }))
     }, 2000)
   }
 
@@ -224,6 +344,7 @@ export default function Home() {
                   : charCount > OPTIMAL_CHARS
                     ? 'text-amber-500'
                     : 'text-emerald-600'
+              const hasContent = !!(post.text || post.error)
 
               return (
                 <div key={format.value} className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col min-h-64">
@@ -232,12 +353,14 @@ export default function Home() {
                     <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${format.badge}`}>
                       {format.label}
                     </span>
-                    {post.text && (
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      {post.text && (
                         <span className={`text-xs font-mono tabular-nums ${charColor}`}>
                           {charCount}
                           <span className="text-gray-400">/{OPTIMAL_CHARS}</span>
                         </span>
+                      )}
+                      {post.text && (
                         <button
                           onClick={() => copyPost(format.value)}
                           className={`px-2.5 py-1 rounded-lg border text-xs font-medium transition-all ${
@@ -248,8 +371,18 @@ export default function Home() {
                         >
                           {post.copied ? '✓ Copied' : '⎘ Copy'}
                         </button>
-                      </div>
-                    )}
+                      )}
+                      {/* Regenerate button */}
+                      {hasContent && !post.isGenerating && topic.trim() && (
+                        <button
+                          onClick={() => regenerateSingle(format.value)}
+                          title="Regenerate this format"
+                          className="px-2.5 py-1 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all"
+                        >
+                          ↻ Regen
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Error */}
@@ -289,9 +422,10 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* Char count bar */}
+                  {/* Footer: char bar + hashtags + hook optimizer */}
                   {post.text && !post.isGenerating && (
-                    <div className="mt-3 pt-3 border-t border-gray-100">
+                    <div className="mt-3 pt-3 border-t border-gray-100 space-y-3">
+                      {/* Char count bar */}
                       <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all duration-300 ${
@@ -299,6 +433,76 @@ export default function Home() {
                           }`}
                           style={{ width: `${Math.min(100, (charCount / MAX_CHARS) * 100)}%` }}
                         />
+                      </div>
+
+                      {/* Hashtags */}
+                      {(post.hashtags.length > 0 || post.isLoadingHashtags) && (
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {post.isLoadingHashtags ? (
+                            <>
+                              {[40, 56, 48].map((w, i) => (
+                                <div key={i} className="h-4 bg-gray-100 rounded-full animate-pulse" style={{ width: `${w}px` }} />
+                              ))}
+                            </>
+                          ) : (
+                            post.hashtags.map((tag, i) => (
+                              <span
+                                key={i}
+                                className="text-[11px] font-medium text-[#0077b5] bg-blue-50 px-2 py-0.5 rounded-full"
+                              >
+                                #{tag}
+                              </span>
+                            ))
+                          )}
+                        </div>
+                      )}
+
+                      {/* Hook optimizer */}
+                      <div>
+                        <button
+                          onClick={() => optimizeHook(format.value)}
+                          disabled={post.isLoadingHooks}
+                          className={`text-xs font-medium px-2.5 py-1 rounded-lg border transition-all ${
+                            post.showHooks
+                              ? 'bg-violet-50 border-violet-200 text-violet-700'
+                              : 'border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                          } disabled:opacity-50`}
+                        >
+                          {post.isLoadingHooks ? (
+                            <span className="flex items-center gap-1.5">
+                              <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                              </svg>
+                              Optimizing…
+                            </span>
+                          ) : post.showHooks ? '▾ Hide Hooks' : '⚡ Optimize Hook'}
+                        </button>
+
+                        {/* Hooks panel */}
+                        {post.showHooks && post.hooks.length > 0 && (
+                          <div className="mt-2 space-y-1.5">
+                            {post.hooks.map((hook, i) => (
+                              <div
+                                key={i}
+                                className="flex items-start gap-2 p-2 rounded-lg bg-violet-50 border border-violet-100 group"
+                              >
+                                <span className="text-[10px] font-bold text-violet-400 mt-0.5 shrink-0">{i + 1}</span>
+                                <p className="flex-1 text-xs text-violet-900 leading-snug">{hook}</p>
+                                <button
+                                  onClick={() => copyHook(format.value, i, hook)}
+                                  className={`shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded border transition-all opacity-0 group-hover:opacity-100 ${
+                                    post.copiedHookIndex === i
+                                      ? 'bg-emerald-50 border-emerald-200 text-emerald-600'
+                                      : 'border-violet-200 text-violet-600 hover:bg-violet-100'
+                                  }`}
+                                >
+                                  {post.copiedHookIndex === i ? '✓' : '⎘'}
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
