@@ -172,6 +172,10 @@ function HeroMockup() {
       label: 'CONTRARIAN', border: 'border-rose-500/25', glow: 'from-rose-600/8',
       tag: 'text-rose-300 bg-rose-500/10 border-rose-500/25', w: [66, 100, 82, 74, 90],
     },
+    {
+      label: 'CAROUSEL', border: 'border-orange-500/25', glow: 'from-orange-600/8',
+      tag: 'text-orange-300 bg-orange-500/10 border-orange-500/25', w: [100, 72, 88, 55, 80],
+    },
   ]
 
   return (
@@ -224,7 +228,7 @@ function HeroMockup() {
           {/* Post cards grid */}
           <div className="p-4 grid grid-cols-2 gap-2.5">
             {cards.map((card, i) => (
-              <div key={i} className={`rounded-xl border ${card.border} bg-gradient-to-b ${card.glow} to-transparent p-3`}>
+              <div key={i} className={`rounded-xl border ${card.border} bg-gradient-to-b ${card.glow} to-transparent p-3${i === cards.length - 1 && cards.length % 2 !== 0 ? ' col-span-2' : ''}`}>
                 <span className={`inline-block text-[7px] font-bold px-2 py-0.5 rounded-full border ${card.tag}`}>
                   {card.label}
                 </span>
