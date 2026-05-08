@@ -79,6 +79,17 @@ const FORMATS = [
     glowShadow: 'hover:shadow-[0_0_40px_-12px_rgba(16,185,129,0.2)]',
     accent:     '#10b981',
   },
+  {
+    value: 'carousel',
+    label: 'Carousel',
+    badge:      'text-orange-300 bg-orange-500/10 border-orange-500/25',
+    cursor:     'bg-orange-400',
+    border:     'border-orange-500/20',
+    hoverBorder:'hover:border-orange-400/55',
+    glow:       'from-orange-600/8',
+    glowShadow: 'hover:shadow-[0_0_40px_-12px_rgba(249,115,22,0.2)]',
+    accent:     '#f97316',
+  },
 ]
 
 const OPTIMAL_CHARS = 1300
@@ -386,10 +397,10 @@ export default function GeneratePage() {
                 {isAnyGenerating ? (
                   <>
                     <Spinner className="w-4 h-4" />
-                    Generating 6 posts…
+                    Generating 7 posts…
                   </>
                 ) : (
-                  '✦ Generate All 6 Posts'
+                  '✦ Generate All 7 Posts'
                 )}
               </button>
 

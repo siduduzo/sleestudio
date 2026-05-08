@@ -88,6 +88,20 @@ const FORMATS = [
     reactions: 1198,
     comments: 147,
   },
+  {
+    label: 'Carousel',
+    tag: 'text-orange-300 bg-orange-500/10 border-orange-500/25',
+    border: 'border-orange-500/20',
+    hover: 'hover:border-orange-400/50 hover:shadow-[0_0_30px_-8px_rgba(249,115,22,0.15)]',
+    glow: 'from-orange-600/8',
+    avatar: 'from-orange-500 to-orange-800',
+    name: 'Devon Clarke',
+    role: 'Content Lead @ HubSpot · 2nd',
+    time: '8h',
+    preview: 'Slide 1: I 10x\'d my LinkedIn reach in 30 days without posting more. Here\'s the 7-slide playbook →\n\nSlide 2: Stop chasing followers. Chase conversations.\n\nSlide 3: One post at the wrong time = invisible.',
+    reactions: 3247,
+    comments: 418,
+  },
 ]
 
 const STEPS = [
@@ -100,7 +114,7 @@ const STEPS = [
   {
     n: '02',
     title: 'Six formats generate in parallel',
-    body: 'Story, listicle, framework, contrarian, data insight, quick win — all written simultaneously in under 30 seconds.',
+    body: 'Story, listicle, framework, contrarian, data insight, quick win, carousel — all written simultaneously in under 30 seconds.',
     icon: '⚡',
   },
   {
@@ -337,7 +351,7 @@ export default function LandingPage() {
 
           <p className="fade-up-4 text-lg sm:text-xl text-white/40 max-w-2xl mx-auto mb-10 leading-relaxed font-light">
             Type your idea. Get six battle-tested LinkedIn formats back in 30 seconds —
-            story, listicle, framework, contrarian, data insight, and quick win.
+            story, listicle, framework, contrarian, data insight, quick win, and carousel.
           </p>
 
           <div className="fade-up-4 flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
@@ -414,7 +428,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-white/[0.08] bg-white/[0.03] text-[11px] text-white/35 mb-6">
-              ✦ Six formats
+              ✦ Seven formats
             </div>
             <h2 className="text-3xl sm:text-5xl font-black tracking-tight mb-4">
               Every angle.{' '}
@@ -423,7 +437,7 @@ export default function LandingPage() {
               </span>
             </h2>
             <p className="text-white/35 max-w-lg mx-auto text-base font-light leading-relaxed">
-              Six formats engineered for LinkedIn&apos;s algorithm, generated simultaneously.
+              Seven formats engineered for LinkedIn&apos;s algorithm, generated simultaneously.
               Pick the one that fits your voice — or post all six.
             </p>
           </div>
@@ -491,7 +505,7 @@ export default function LandingPage() {
                 <p className="text-sm text-white/30">Everything you need to get started.</p>
               </div>
               <ul className="space-y-3 mb-10 flex-1">
-                {['5 generations per day', 'All 6 post formats', 'Hook optimizer', 'Smart hashtags', 'Copy to clipboard'].map(f => (
+                {['5 generations per day', 'All 7 post formats', 'Hook optimizer', 'Smart hashtags', 'Copy to clipboard'].map(f => (
                   <li key={f} className="flex items-center gap-3 text-sm text-white/50">
                     <span className="w-4 h-4 rounded-full border border-white/15 flex items-center justify-center text-[9px] text-white/30 flex-shrink-0">✓</span>
                     {f}
@@ -520,7 +534,7 @@ export default function LandingPage() {
                 <p className="text-sm text-white/30">For serious creators and teams.</p>
               </div>
               <ul className="relative space-y-3 mb-10 flex-1">
-                {['Unlimited generations', 'All 6 post formats', 'Hook optimizer', 'Smart hashtags', 'Post history', 'Custom tone presets', 'Priority speed'].map(f => (
+                {['Unlimited generations', 'All 7 post formats', 'Hook optimizer', 'Smart hashtags', 'Post history', 'Custom tone presets', 'Priority speed'].map(f => (
                   <li key={f} className="flex items-center gap-3 text-sm text-white/70">
                     <span className="w-4 h-4 rounded-full bg-[#0077b5]/30 border border-[#0077b5]/50 flex items-center justify-center text-[9px] text-[#38bdf8] flex-shrink-0">✓</span>
                     {f}

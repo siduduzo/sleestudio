@@ -57,6 +57,33 @@ Make it feel like insider knowledge, not a press release.`,
 4. The result the reader can expect
 5. Close with: "Try this today and tell me what happens"
 Keep total length under 800 characters. Short. Sharp. Implementable in minutes.`,
+
+  carousel: `Write a LinkedIn carousel post formatted as slide-by-slide content (6–8 slides).
+
+Use this exact structure, labeling each slide clearly:
+
+Slide 1: [Hook — one arresting line that makes people want to swipe. This is all they see in the feed.]
+
+Slide 2: [First key point — bold, single idea in 1-2 short sentences]
+
+Slide 3: [Second key point]
+
+Slide 4: [Third key point]
+
+Slide 5: [Fourth key point]
+
+Slide 6: [Fifth key point]
+
+Slide 7: [Sixth key point — optional, include if the topic warrants it]
+
+Slide 8: [CTA slide — ask a question, invite a share, or give a bold takeaway]
+
+Rules:
+- Each slide must be 1-2 sentences max — one idea per slide, no more
+- Slide 1 hook must be impossible to scroll past
+- Build momentum — each slide should make the reader want the next one
+- No markdown, no dashes, just the "Slide N:" label followed by plain text
+- Leave a blank line between each slide`,
 }
 
 function buildPrompt(topic: string, tone: string, format: string, audience: string): string {
