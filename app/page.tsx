@@ -346,7 +346,7 @@ export default function LandingPage() {
 
           <h1 className="font-black tracking-tighter leading-[0.9] mb-6">
             <span className="fade-up-2 block text-[clamp(4rem,11vw,8.5rem)] text-white">
-              Six posts.
+              Seven posts.
             </span>
             <span className="fade-up-3 block text-[clamp(4rem,11vw,8.5rem)] bg-gradient-to-r from-[#0077b5] via-[#38bdf8] to-[#818cf8] bg-clip-text text-transparent gradient-pan">
               One prompt.
