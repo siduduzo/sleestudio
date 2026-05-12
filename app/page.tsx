@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import NavUser from './components/NavUser'
+import { ThemeToggle } from './components/ThemeToggle'
 
 // ── Showcase data ────────────────────────────────────────────────────────────
 
@@ -183,7 +184,7 @@ function HeroMockup() {
       <div className="absolute inset-x-0 top-1/4 h-80 bg-[#0077b5]/10 blur-[80px] -z-10" />
       <div className="absolute inset-x-0 bottom-0 h-40 bg-purple-600/6 blur-[60px] -z-10" />
 
-      <div className="rounded-2xl border border-white/[0.09] bg-[#07070e] overflow-hidden shadow-2xl shadow-black/80">
+      <div className="rounded-2xl border border-white/[0.09] bg-[var(--card-bg)] overflow-hidden shadow-2xl shadow-black/80">
         {/* Browser chrome */}
         <div className="flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.06] bg-black/20">
           <div className="flex gap-1.5">
@@ -256,7 +257,7 @@ function ShowcaseCard({ format }: { format: typeof FORMATS[number] }) {
   const truncated = lines.length > 5
 
   return (
-    <div className={`group rounded-2xl border ${format.border} bg-gradient-to-b ${format.glow} to-transparent bg-[#07070e] p-5 flex flex-col gap-4 transition-all duration-300 ${format.hover} cursor-default`}>
+    <div className={`group rounded-2xl border ${format.border} bg-gradient-to-b ${format.glow} to-transparent bg-[var(--card-bg)] p-5 flex flex-col gap-4 transition-all duration-300 ${format.hover} cursor-default`}>
       <span className={`self-start text-[10px] font-bold tracking-widest px-2.5 py-1 rounded-full border ${format.tag}`}>
         {format.label.toUpperCase()}
       </span>
@@ -297,7 +298,7 @@ function ShowcaseCard({ format }: { format: typeof FORMATS[number] }) {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#050508] text-white overflow-x-hidden">
+    <div className="page-root min-h-screen bg-[var(--page-bg)] text-white overflow-x-hidden">
 
       {/* Ambient blobs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
@@ -310,7 +311,7 @@ export default function LandingPage() {
       <div className="fixed inset-0 grid-bg pointer-events-none z-0 opacity-60" />
 
       {/* ── Nav ── */}
-      <nav className="relative z-50 border-b border-white/[0.06] backdrop-blur-xl sticky top-0 bg-[#050508]/75">
+      <nav className="relative z-50 border-b border-white/[0.06] backdrop-blur-xl sticky top-0 bg-[var(--nav-bg)]">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0077b5] to-[#004f7c] flex items-center justify-center shadow-lg shadow-[#0077b5]/30">
@@ -324,6 +325,7 @@ export default function LandingPage() {
             <a href="#pricing" className="text-sm text-white/40 hover:text-white/75 transition-colors">Pricing</a>
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <NavUser />
             <Link
               href="/generate"

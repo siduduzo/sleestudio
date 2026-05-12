@@ -75,3 +75,105 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.13); }
+
+/* ── Theme tokens ───────────────────────────────────── */
+:root {
+  --page-bg: #050508;
+  --card-bg: #07070e;
+  --nav-bg:  rgba(5,5,8,0.80);
+}
+
+html.light {
+  color-scheme: light;
+  --page-bg: #f1f5fb;
+  --card-bg: #ffffff;
+  --nav-bg:  rgba(241,245,251,0.90);
+}
+
+/* ── Light mode overrides ───────────────────────────── */
+html.light .page-root { color: #111827; }
+
+/* text-white variants → dark equivalents */
+html.light .page-root .text-white                          { color: #111827 !important; }
+html.light .page-root .text-white\/85,
+html.light .page-root .hover\:text-white\/85:hover         { color: rgba(17,24,39,.85) !important; }
+html.light .page-root .text-white\/80,
+html.light .page-root .hover\:text-white\/80:hover         { color: rgba(17,24,39,.80) !important; }
+html.light .page-root .text-white\/75,
+html.light .page-root .hover\:text-white\/75:hover         { color: rgba(17,24,39,.75) !important; }
+html.light .page-root .text-white\/70,
+html.light .page-root .hover\:text-white\/70:hover         { color: rgba(17,24,39,.70) !important; }
+html.light .page-root .text-white\/65,
+html.light .page-root .hover\:text-white\/65:hover         { color: rgba(17,24,39,.65) !important; }
+html.light .page-root .text-white\/60,
+html.light .page-root .hover\:text-white\/60:hover         { color: rgba(17,24,39,.60) !important; }
+html.light .page-root .text-white\/55,
+html.light .page-root .hover\:text-white\/55:hover         { color: rgba(17,24,39,.55) !important; }
+html.light .page-root .text-white\/50,
+html.light .page-root .hover\:text-white\/50:hover         { color: rgba(17,24,39,.50) !important; }
+html.light .page-root .text-white\/45,
+html.light .page-root .hover\:text-white\/45:hover         { color: rgba(17,24,39,.45) !important; }
+html.light .page-root .text-white\/40,
+html.light .page-root .hover\:text-white\/40:hover         { color: rgba(17,24,39,.40) !important; }
+html.light .page-root .text-white\/35,
+html.light .page-root .hover\:text-white\/35:hover         { color: rgba(17,24,39,.35) !important; }
+html.light .page-root .text-white\/30,
+html.light .page-root .hover\:text-white\/30:hover         { color: rgba(17,24,39,.30) !important; }
+html.light .page-root .text-white\/25,
+html.light .page-root .hover\:text-white\/25:hover         { color: rgba(17,24,39,.25) !important; }
+html.light .page-root .text-white\/20,
+html.light .page-root .hover\:text-white\/20:hover         { color: rgba(17,24,39,.20) !important; }
+html.light .page-root .text-white\/18                      { color: rgba(17,24,39,.18) !important; }
+html.light .page-root .text-white\/15                      { color: rgba(17,24,39,.15) !important; }
+
+/* border-white variants → dark equivalents */
+html.light .page-root .border-white\/\[0\.05\]                               { border-color: rgba(17,24,39,.06) !important; }
+html.light .page-root .border-white\/\[0\.06\]                               { border-color: rgba(17,24,39,.07) !important; }
+html.light .page-root .border-white\/\[0\.07\]                               { border-color: rgba(17,24,39,.08) !important; }
+html.light .page-root .border-white\/\[0\.08\]                               { border-color: rgba(17,24,39,.09) !important; }
+html.light .page-root .border-white\/\[0\.09\],
+html.light .page-root .hover\:border-white\/\[0\.09\]:hover                  { border-color: rgba(17,24,39,.10) !important; }
+html.light .page-root .border-white\/\[0\.10\]                               { border-color: rgba(17,24,39,.11) !important; }
+html.light .page-root .border-white\/\[0\.12\]                               { border-color: rgba(17,24,39,.13) !important; }
+html.light .page-root .border-white\/15                                       { border-color: rgba(17,24,39,.15) !important; }
+html.light .page-root .border-white\/\[0\.15\],
+html.light .page-root .hover\:border-white\/\[0\.15\]:hover                  { border-color: rgba(17,24,39,.16) !important; }
+html.light .page-root .border-white\/\[0\.18\],
+html.light .page-root .hover\:border-white\/\[0\.18\]:hover                  { border-color: rgba(17,24,39,.18) !important; }
+html.light .page-root .border-white\/20                                       { border-color: rgba(17,24,39,.20) !important; }
+
+/* bg-white opacity variants → dark equivalents */
+html.light .page-root .bg-white\/\[0\.01\]                                   { background-color: rgba(17,24,39,.02) !important; }
+html.light .page-root .bg-white\/\[0\.02\]                                   { background-color: rgba(17,24,39,.03) !important; }
+html.light .page-root .bg-white\/\[0\.03\]                                   { background-color: rgba(17,24,39,.04) !important; }
+html.light .page-root .bg-white\/\[0\.04\],
+html.light .page-root .hover\:bg-white\/\[0\.04\]:hover                      { background-color: rgba(17,24,39,.05) !important; }
+html.light .page-root .bg-white\/\[0\.05\],
+html.light .page-root .hover\:bg-white\/\[0\.05\]:hover                      { background-color: rgba(17,24,39,.05) !important; }
+html.light .page-root .bg-white\/\[0\.06\],
+html.light .page-root .hover\:bg-white\/\[0\.06\]:hover                      { background-color: rgba(17,24,39,.06) !important; }
+html.light .page-root .bg-white\/\[0\.07\]                                   { background-color: rgba(17,24,39,.06) !important; }
+html.light .page-root .bg-white\/\[0\.08\]                                   { background-color: rgba(17,24,39,.07) !important; }
+html.light .page-root .bg-black\/20                                          { background-color: rgba(241,245,251,.5) !important; }
+html.light .page-root .bg-black\/30                                          { background-color: rgba(241,245,251,.7) !important; }
+
+/* dot grid */
+html.light .grid-bg {
+  background-image: radial-gradient(rgba(0,0,0,.05) 1px, transparent 1px);
+}
+
+/* skeleton shimmer */
+html.light .skeleton {
+  background: linear-gradient(90deg,rgba(0,0,0,.04) 25%,rgba(0,0,0,.09) 50%,rgba(0,0,0,.04) 75%);
+  background-size: 600px 100%;
+}
+
+/* scrollbar */
+html.light ::-webkit-scrollbar-thumb       { background: rgba(0,0,0,.12); }
+html.light ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,.20); }
+
+/* inputs */
+html.light .page-root textarea,
+html.light .page-root input[type="text"]          { color: #111827 !important; }
+html.light .page-root textarea::placeholder,
+html.light .page-root input::placeholder          { color: rgba(17,24,39,.25) !important; }

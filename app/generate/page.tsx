@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { UserButton } from '@clerk/nextjs'
+import { ThemeToggle } from '../components/ThemeToggle'
 
 const TONES = [
   { value: 'professional',  label: 'Professional',  emoji: '💼' },
@@ -286,7 +287,7 @@ export default function GeneratePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050508] text-white overflow-x-hidden">
+    <div className="page-root min-h-screen bg-[var(--page-bg)] text-white overflow-x-hidden">
 
       {/* Ambient blobs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
@@ -299,7 +300,7 @@ export default function GeneratePage() {
       <div className="fixed inset-0 grid-bg pointer-events-none z-0 opacity-50" />
 
       {/* ── Nav ── */}
-      <nav className="relative z-50 border-b border-white/[0.06] backdrop-blur-xl sticky top-0 bg-[#050508]/80">
+      <nav className="relative z-50 border-b border-white/[0.06] backdrop-blur-xl sticky top-0 bg-[var(--nav-bg)]">
         <div className="max-w-[1440px] mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 group">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0077b5] to-[#004f7c] flex items-center justify-center shadow-lg shadow-[#0077b5]/25 group-hover:shadow-[#0077b5]/40 transition-shadow">
@@ -313,6 +314,7 @@ export default function GeneratePage() {
               ← Home
             </Link>
             <div className="w-px h-4 bg-white/[0.08]" />
+            <ThemeToggle />
             <UserButton />
           </div>
         </div>
@@ -438,7 +440,7 @@ export default function GeneratePage() {
               return (
                 <div
                   key={format.value}
-                  className={`group rounded-2xl border ${format.border} ${format.hoverBorder} bg-gradient-to-b ${format.glow} to-transparent bg-[#07070e] transition-all duration-300 ${format.glowShadow} hover:-translate-y-0.5 flex flex-col min-h-64`}
+                  className={`group rounded-2xl border ${format.border} ${format.hoverBorder} bg-gradient-to-b ${format.glow} to-transparent bg-[var(--card-bg)] transition-all duration-300 ${format.glowShadow} hover:-translate-y-0.5 flex flex-col min-h-64`}
                 >
                   {/* Card top accent line */}
                   <div
