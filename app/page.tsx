@@ -221,7 +221,7 @@ function HeroMockup() {
               ))}
             </div>
             <div className="w-full py-1.5 bg-gradient-to-r from-[#0077b5] to-[#0088d4] rounded-xl text-[8px] text-white font-bold text-center shadow-lg shadow-[#0077b5]/20">
-              ✦ Generate All 6
+              ✦ Generate All 7
             </div>
           </div>
 
