@@ -313,7 +313,7 @@ export default function GeneratePage() {
               ← Home
             </Link>
             <div className="w-px h-4 bg-white/[0.08]" />
-            <UserButton afterSignOutUrl="/" />
+            <UserButton />
           </div>
         </div>
       </nav>
