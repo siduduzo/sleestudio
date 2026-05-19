@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
 
 const anthropic = new Anthropic()
 
@@ -118,6 +119,11 @@ Output ONLY the post text — no preamble, no "Here's a post:", no explanations.
 
 export async function POST(request: NextRequest) {
   try {
+    const { userId } = await auth()
+    if (!userId) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const body = await request.json()
     const { topic, tone, format, audience } = body
 

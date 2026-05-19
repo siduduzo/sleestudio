@@ -1,9 +1,16 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { UserButton } from '@clerk/nextjs'
 import { ThemeToggle } from '../components/ThemeToggle'
+
+type PlanInfo = {
+  plan: 'free' | 'pro'
+  dailyUsage: number
+  dailyLimit: number
+  canGenerate: boolean
+}
 
 const TONES = [
   { value: 'professional',  label: 'Professional',  emoji: '💼' },
@@ -133,10 +140,52 @@ export default function GeneratePage() {
   const [tone, setTone]         = useState('professional')
   const [audience, setAudience] = useState('')
   const [posts, setPosts]       = useState<Record<string, PostState>>(initPosts)
+  const [planInfo, setPlanInfo] = useState<PlanInfo | null>(null)
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false)
+  const [isUpgrading, setIsUpgrading]             = useState(false)
   const abortRef = useRef<AbortController | null>(null)
 
   const isAnyGenerating = Object.values(posts).some(p => p.isGenerating)
   const hasAnyContent   = Object.values(posts).some(p => p.text || p.error)
+
+  useEffect(() => {
+    fetch('/api/user/plan')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => data && setPlanInfo(data))
+      .catch(() => {})
+  }, [])
+
+  async function startUsageSession(): Promise<boolean> {
+    try {
+      const res = await fetch('/api/usage', { method: 'POST' })
+      if (res.status === 429) {
+        setShowUpgradePrompt(true)
+        return false
+      }
+      if (res.ok) {
+        const data = await res.json()
+        setPlanInfo(prev => prev ? {
+          ...prev,
+          dailyUsage: data.dailyUsage ?? prev.dailyUsage,
+          canGenerate: data.remaining > 0,
+        } : prev)
+      }
+      return res.ok
+    } catch {
+      return false
+    }
+  }
+
+  async function handleUpgrade() {
+    setIsUpgrading(true)
+    try {
+      const res = await fetch('/api/stripe/checkout', { method: 'POST' })
+      const { url } = await res.json()
+      if (url) window.location.href = url
+    } catch {
+      setIsUpgrading(false)
+    }
+  }
 
   async function fetchHashtags(formatValue: string, text: string) {
     setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], isLoadingHashtags: true } }))
@@ -159,6 +208,9 @@ export default function GeneratePage() {
 
   async function generate() {
     if (!topic.trim() || isAnyGenerating) return
+
+    const allowed = await startUsageSession()
+    if (!allowed) return
 
     abortRef.current?.abort()
     abortRef.current = new AbortController()
@@ -210,6 +262,10 @@ export default function GeneratePage() {
 
   async function regenerateSingle(formatValue: string) {
     if (!topic.trim() || posts[formatValue].isGenerating) return
+
+    const allowed = await startUsageSession()
+    if (!allowed) return
+
     setPosts(prev => ({ ...prev, [formatValue]: { ...EMPTY_POST, isGenerating: true } }))
     let accumulated = ''
     try {
@@ -288,6 +344,39 @@ export default function GeneratePage() {
 
   return (
     <div className="page-root min-h-screen bg-[var(--page-bg)] text-white overflow-x-hidden">
+
+      {/* Upgrade prompt modal */}
+      {showUpgradePrompt && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-white/[0.1] bg-[#07070e] shadow-2xl p-7 space-y-5">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#0077b5]/20 to-purple-600/20 border border-white/[0.08] flex items-center justify-center text-xl mx-auto">
+              ✦
+            </div>
+            <div className="text-center space-y-1.5">
+              <h3 className="text-base font-bold text-white">Daily limit reached</h3>
+              <p className="text-sm text-white/45 leading-relaxed">
+                Free users get {5} generations per day. Upgrade to Pro for unlimited generations.
+              </p>
+            </div>
+            <div className="space-y-2.5">
+              <button
+                onClick={handleUpgrade}
+                disabled={isUpgrading}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-[#0077b5] to-[#0088d4] text-white font-bold text-sm shadow-xl shadow-[#0077b5]/20 hover:shadow-[#0077b5]/35 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isUpgrading ? <Spinner className="w-4 h-4" /> : null}
+                Upgrade to Pro — $19/mo
+              </button>
+              <button
+                onClick={() => setShowUpgradePrompt(false)}
+                className="w-full py-2.5 text-sm text-white/35 hover:text-white/60 transition-colors"
+              >
+                Maybe later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Ambient blobs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
@@ -389,6 +478,30 @@ export default function GeneratePage() {
 
               {/* Divider */}
               <div className="h-px bg-white/[0.06]" />
+
+              {/* Plan badge + usage counter */}
+              {planInfo && (
+                <div className="flex items-center justify-between">
+                  {planInfo.plan === 'pro' ? (
+                    <span className="text-[10px] font-bold tracking-wide px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300">
+                      Pro — Unlimited
+                    </span>
+                  ) : (
+                    <>
+                      <span className="text-[10px] text-white/35">
+                        {planInfo.dailyLimit - planInfo.dailyUsage} / {planInfo.dailyLimit} generations left today
+                      </span>
+                      <button
+                        onClick={handleUpgrade}
+                        disabled={isUpgrading}
+                        className="text-[10px] font-semibold px-2.5 py-1 rounded-lg bg-[#0077b5]/15 border border-[#0077b5]/30 text-[#38bdf8] hover:bg-[#0077b5]/25 transition-all disabled:opacity-50"
+                      >
+                        {isUpgrading ? 'Redirecting…' : 'Upgrade to Pro'}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
 
               {/* Generate button */}
               <button
