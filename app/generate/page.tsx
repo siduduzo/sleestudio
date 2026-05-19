@@ -182,9 +182,12 @@ export default function GeneratePage() {
     setIsUpgrading(true)
     try {
       const res = await fetch('/api/stripe/checkout', { method: 'POST' })
-      const { url } = await res.json()
-      if (url) window.location.href = url
-    } catch {
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? `Checkout failed (${res.status})`)
+      if (data.url) window.location.href = data.url
+    } catch (err) {
+      console.error('Upgrade error:', err)
+      alert(err instanceof Error ? err.message : 'Could not start checkout. Please try again.')
       setIsUpgrading(false)
     }
   }
