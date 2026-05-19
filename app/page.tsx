@@ -341,10 +341,7 @@ export default function LandingPage() {
       <section className="relative z-10 pt-28 pb-10 px-6 text-center">
         <div className="max-w-4xl mx-auto">
 
-          <div className="fade-up-1 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/[0.10] bg-white/[0.04] text-xs text-white/45 mb-10 backdrop-blur-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Trusted by 2,400+ LinkedIn creators
-          </div>
+          <p className="fade-up-1 text-sm text-white/40 mb-10">30 seconds · 7 formats · zero blank pages</p>
 
           <h1 className="font-black tracking-tighter leading-[0.9] mb-6">
             <span className="fade-up-2 block text-[clamp(4rem,11vw,8.5rem)] text-white">
