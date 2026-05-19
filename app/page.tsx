@@ -373,20 +373,6 @@ export default function LandingPage() {
             </a>
           </div>
 
-          {/* Stat strip */}
-          <div className="fade-up-4 flex items-center justify-center gap-8 sm:gap-14 py-6 border-y border-white/[0.06] mb-4">
-            {[
-              { n: '2,400+', l: 'creators' },
-              { n: '6', l: 'formats at once' },
-              { n: '30s', l: 'average' },
-            ].map((s, i) => (
-              <div key={i} className="text-center">
-                <div className="text-2xl sm:text-3xl font-black text-white tabular-nums">{s.n}</div>
-                <div className="text-xs text-white/30 mt-0.5">{s.l}</div>
-              </div>
-            ))}
-          </div>
-
           <HeroMockup />
         </div>
       </section>
