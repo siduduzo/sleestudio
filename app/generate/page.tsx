@@ -140,7 +140,9 @@ export default function GeneratePage() {
   const [tone, setTone]         = useState('professional')
   const [audience, setAudience] = useState('')
   const [posts, setPosts]       = useState<Record<string, PostState>>(initPosts)
-  const [planInfo, setPlanInfo] = useState<PlanInfo | null>(null)
+  const [planInfo, setPlanInfo] = useState<PlanInfo>({
+    plan: 'free', dailyUsage: 0, dailyLimit: 5, canGenerate: true,
+  })
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false)
   const [isUpgrading, setIsUpgrading]             = useState(false)
   const abortRef = useRef<AbortController | null>(null)
@@ -164,11 +166,11 @@ export default function GeneratePage() {
       }
       if (res.ok) {
         const data = await res.json()
-        setPlanInfo(prev => prev ? {
+        setPlanInfo(prev => ({
           ...prev,
           dailyUsage: data.dailyUsage ?? prev.dailyUsage,
           canGenerate: data.remaining > 0,
-        } : prev)
+        }))
       }
       return res.ok
     } catch {
@@ -480,8 +482,7 @@ export default function GeneratePage() {
               <div className="h-px bg-white/[0.06]" />
 
               {/* Plan badge + usage counter */}
-              {planInfo && (
-                <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between">
                   {planInfo.plan === 'pro' ? (
                     <span className="text-[10px] font-bold tracking-wide px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300">
                       Pro — Unlimited
@@ -501,7 +502,6 @@ export default function GeneratePage() {
                     </>
                   )}
                 </div>
-              )}
 
               {/* Generate button */}
               <button
