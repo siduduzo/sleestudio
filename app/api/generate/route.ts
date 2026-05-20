@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import { supabase, FREE_DAILY_LIMIT } from '@/lib/supabase'
 
 const anthropic = new Anthropic()
 
@@ -122,6 +123,42 @@ export async function POST(request: NextRequest) {
     const { userId } = await auth()
     if (!userId) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Check plan and enforce daily limit server-side
+    const { data: planData } = await supabase
+      .from('user_plans')
+      .select('plan')
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    const isPro = planData?.plan === 'pro'
+
+    if (!isPro) {
+      const today = new Date().toISOString().slice(0, 10)
+
+      const { data: usageData } = await supabase
+        .from('daily_usage')
+        .select('count')
+        .eq('user_id', userId)
+        .eq('date', today)
+        .maybeSingle()
+
+      const currentCount = usageData?.count ?? 0
+
+      if (currentCount >= FREE_DAILY_LIMIT) {
+        return Response.json(
+          { error: 'Daily limit reached. Upgrade to Pro for unlimited generations.' },
+          { status: 429 }
+        )
+      }
+
+      // Increment usage. All 7 parallel calls in a session read the same currentCount
+      // and upsert the same new value, so count increments by 1 per session regardless.
+      await supabase.from('daily_usage').upsert(
+        { user_id: userId, date: today, count: currentCount + 1 },
+        { onConflict: 'user_id,date' }
+      )
     }
 
     const body = await request.json()

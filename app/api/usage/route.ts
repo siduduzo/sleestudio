@@ -37,16 +37,11 @@ export async function POST() {
     )
   }
 
-  await supabase.from('daily_usage').upsert(
-    { user_id: userId, date: today, count: currentCount + 1 },
-    { onConflict: 'user_id,date' }
-  )
-
   return Response.json({
     allowed: true,
     plan: 'free',
-    dailyUsage: currentCount + 1,
+    dailyUsage: currentCount,
     dailyLimit: FREE_DAILY_LIMIT,
-    remaining: FREE_DAILY_LIMIT - currentCount - 1,
+    remaining: FREE_DAILY_LIMIT - currentCount,
   })
 }
