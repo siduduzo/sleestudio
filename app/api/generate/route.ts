@@ -136,39 +136,35 @@ export async function POST(request: NextRequest) {
       .maybeSingle()
 
     const isPro = planData?.plan === 'pro'
-    console.log('[generate] userId:', userId, '| plan:', planData?.plan ?? 'free (no row)', '| isPro:', isPro)
 
     if (!isPro) {
       const today = new Date().toISOString().slice(0, 10)
 
-      const { data: usageData, error: readError } = await supabase
+      const { data: usageData } = await supabase
         .from('daily_usage')
         .select('count')
         .eq('user_id', userId)
         .eq('date', today)
         .maybeSingle()
 
-      console.log('[generate] usage read — data:', usageData, '| error:', readError?.message ?? null)
-
       const currentCount = usageData?.count ?? 0
 
       if (currentCount >= FREE_DAILY_LIMIT) {
-        console.log('[generate] limit reached — currentCount:', currentCount)
         return Response.json(
           { error: 'Daily limit reached. Upgrade to Pro for unlimited generations.' },
           { status: 429 }
         )
       }
 
-      const { data: upsertData, error: upsertError } = await supabase
+      const { error: upsertError } = await supabase
         .from('daily_usage')
         .upsert(
           { user_id: userId, date: today, count: currentCount + 1 },
           { onConflict: 'user_id,date' }
         )
-        .select()
-
-      console.log('[generate] upsert — newCount:', currentCount + 1, '| data:', upsertData, '| error:', upsertError?.message ?? null)
+      if (upsertError) {
+        console.error('[generate] Failed to increment daily_usage:', upsertError.message)
+      }
     }
 
     const body = await request.json()
@@ -179,8 +175,6 @@ export async function POST(request: NextRequest) {
     }
     const safeTone   = VALID_TONES.includes(tone)   ? tone   : 'professional'
     const safeFormat = VALID_FORMATS.includes(format) ? format : 'listicle'
-
-    console.log('[generate] topic:', topic.slice(0, 80), '| format:', safeFormat, '| tone:', safeTone)
 
     const stream = anthropic.messages.stream({
       model: 'claude-haiku-4-5-20251001',
