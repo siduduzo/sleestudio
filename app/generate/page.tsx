@@ -496,7 +496,7 @@ export default function GeneratePage() {
         <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6 items-start">
 
           {/* ── Glassmorphism Input Panel ── */}
-          <div className="lg:sticky lg:top-[73px] rounded-2xl border border-white/[0.09] bg-white/[0.02] backdrop-blur-2xl shadow-2xl shadow-black/40 overflow-hidden">
+          <div className="gen-input-panel lg:sticky lg:top-[73px] rounded-2xl border border-white/[0.09] bg-white/[0.02] backdrop-blur-2xl shadow-2xl shadow-black/40 overflow-hidden">
             {/* Panel header accent */}
             <div className="h-px bg-gradient-to-r from-transparent via-[#0077b5]/50 to-transparent" />
 
@@ -634,7 +634,7 @@ export default function GeneratePage() {
               return (
                 <div
                   key={format.value}
-                  className={`group rounded-2xl border ${format.border} ${format.hoverBorder} bg-gradient-to-b ${format.glow} to-transparent bg-[var(--card-bg)] transition-all duration-300 ${format.glowShadow} hover:-translate-y-0.5 flex flex-col min-h-64`}
+                  className={`gen-post-card group rounded-2xl border ${format.border} ${format.hoverBorder} bg-gradient-to-b ${format.glow} to-transparent bg-[var(--card-bg)] transition-all duration-300 ${format.glowShadow} hover:-translate-y-0.5 flex flex-col min-h-64`}
                 >
                   {/* Card top accent line */}
                   <div
@@ -642,7 +642,7 @@ export default function GeneratePage() {
                     style={{ background: `linear-gradient(90deg, transparent, ${format.accent}40, transparent)` }}
                   />
 
-                  <div className="p-4 flex flex-col flex-1">
+                  <div className="p-5 flex flex-col flex-1">
                     {/* Card header */}
                     <div className="flex items-center justify-between mb-3.5">
                       <span className={`text-[9px] font-bold tracking-widest px-2.5 py-1 rounded-full border ${format.badge}`}>
@@ -724,7 +724,7 @@ export default function GeneratePage() {
 
                     {/* Post text */}
                     {post.text && (
-                      <div className="flex-1 text-[11px] text-white/60 leading-[1.7] whitespace-pre-wrap">
+                      <div className="flex-1 text-sm text-white/90 leading-[1.85] whitespace-pre-wrap">
                         {post.text}
                         {post.isGenerating && (
                           <span
@@ -808,7 +808,7 @@ export default function GeneratePage() {
                                     className="flex items-start gap-2 p-2.5 rounded-xl bg-violet-500/8 border border-violet-500/18 group/hook"
                                   >
                                     <span className="text-[9px] font-bold text-violet-400/60 mt-0.5 shrink-0 font-mono">{i + 1}</span>
-                                    <p className="flex-1 text-[11px] text-white/60 leading-snug">{hook}</p>
+                                    <p className="flex-1 text-sm text-white/75 leading-relaxed">{hook}</p>
                                     <button
                                       onClick={() => copyHook(format.value, i, hook)}
                                       className={`shrink-0 text-[9px] font-medium px-1.5 py-0.5 rounded border transition-all opacity-0 group-hover/hook:opacity-100 ${
@@ -843,7 +843,7 @@ export default function GeneratePage() {
 
           {/* History panel (Pro only) */}
           {planInfo.plan === 'pro' && (
-            <div className="rounded-2xl border border-white/[0.09] bg-white/[0.02] backdrop-blur-xl p-5">
+            <div className="gen-input-panel rounded-2xl border border-white/[0.09] bg-white/[0.02] backdrop-blur-xl p-5">
               <button
                 onClick={toggleHistory}
                 className="flex items-center gap-2 text-sm font-medium text-white/45 hover:text-white/70 transition-colors w-full text-left"

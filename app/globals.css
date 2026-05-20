@@ -177,3 +177,91 @@ html.light .page-root textarea,
 html.light .page-root input[type="text"]          { color: #111827 !important; }
 html.light .page-root textarea::placeholder,
 html.light .page-root input::placeholder          { color: rgba(17,24,39,.25) !important; }
+
+/* ── Generate page light mode redesign ──────────────── */
+
+/* new opacity levels used by generate page */
+html.light .page-root .text-white\/90,
+html.light .page-root .hover\:text-white\/90:hover { color: rgba(17,24,39,.95) !important; }
+html.light .page-root .text-white\/75,
+html.light .page-root .hover\:text-white\/75:hover { color: rgba(17,24,39,.78) !important; }
+
+/* boost low-contrast tiers for better readability throughout */
+html.light .page-root .text-white\/15             { color: rgba(17,24,39,.28) !important; }
+html.light .page-root .text-white\/18             { color: rgba(17,24,39,.38) !important; }
+html.light .page-root .text-white\/20,
+html.light .page-root .hover\:text-white\/20:hover { color: rgba(17,24,39,.40) !important; }
+html.light .page-root .text-white\/25,
+html.light .page-root .hover\:text-white\/25:hover { color: rgba(17,24,39,.45) !important; }
+html.light .page-root .text-white\/35,
+html.light .page-root .hover\:text-white\/35:hover { color: rgba(17,24,39,.52) !important; }
+html.light .page-root .text-white\/40,
+html.light .page-root .hover\:text-white\/40:hover { color: rgba(17,24,39,.60) !important; }
+html.light .page-root .text-white\/45,
+html.light .page-root .hover\:text-white\/45:hover { color: rgba(17,24,39,.65) !important; }
+html.light .page-root .text-white\/50,
+html.light .page-root .hover\:text-white\/50:hover { color: rgba(17,24,39,.68) !important; }
+
+/* divider lines more visible in light */
+html.light .page-root .border-white\/\[0\.05\]    { border-color: rgba(17,24,39,.10) !important; }
+html.light .page-root .border-white\/\[0\.06\]    { border-color: rgba(17,24,39,.12) !important; }
+
+/* progress bar track */
+html.light .page-root .bg-white\/\[0\.05\],
+html.light .page-root .hover\:bg-white\/\[0\.05\]:hover { background-color: rgba(0,0,0,.08) !important; }
+
+/* input panel + history: light gray surface with clear border */
+html.light .page-root .gen-input-panel {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 2px 20px rgba(0,0,0,.06) !important;
+}
+html.light .gen-input-panel textarea,
+html.light .gen-input-panel input[type="text"] {
+  background-color: #ffffff !important;
+  border-color: #d1d5db !important;
+}
+
+/* post cards: white surface with subtle elevation */
+html.light .page-root .gen-post-card {
+  background-color: #ffffff !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,.07) !important;
+}
+
+/* format card borders → clearly visible on white */
+html.light .page-root .border-purple-500\/20  { border-color: rgba(168,85,247,.35) !important; }
+html.light .page-root .border-blue-500\/20    { border-color: rgba(59,130,246,.35) !important; }
+html.light .page-root .border-teal-500\/20    { border-color: rgba(20,184,166,.35) !important; }
+html.light .page-root .border-rose-500\/20    { border-color: rgba(244,63,94,.35) !important; }
+html.light .page-root .border-amber-500\/20   { border-color: rgba(245,158,11,.35) !important; }
+html.light .page-root .border-emerald-500\/20 { border-color: rgba(16,185,129,.35) !important; }
+html.light .page-root .border-orange-500\/20  { border-color: rgba(249,115,22,.35) !important; }
+
+/* format badge text → dark accessible colors on light bg */
+html.light .page-root .text-purple-300  { color: #7c3aed !important; }
+html.light .page-root .text-blue-300    { color: #1d4ed8 !important; }
+html.light .page-root .text-teal-300    { color: #0f766e !important; }
+html.light .page-root .text-rose-300    { color: #be123c !important; }
+html.light .page-root .text-amber-300   { color: #92400e !important; }
+html.light .page-root .text-emerald-300 { color: #065f46 !important; }
+html.light .page-root .text-orange-300  { color: #c2410c !important; }
+
+/* semantic feedback colors: WCAG-accessible on white */
+html.light .page-root .text-emerald-400 { color: #059669 !important; }
+html.light .page-root .text-amber-400   { color: #d97706 !important; }
+html.light .page-root .text-red-400     { color: #dc2626 !important; }
+
+/* hashtag chip text */
+html.light .page-root .text-\[\#38bdf8\] { color: #0369a1 !important; }
+
+/* violet hook panels */
+html.light .page-root .text-violet-300        { color: #6d28d9 !important; }
+html.light .page-root .text-violet-400        { color: #7c3aed !important; }
+html.light .page-root .text-violet-400\/60    { color: rgba(109,40,217,.70) !important; }
+html.light .page-root .bg-violet-500\/8       { background-color: rgba(139,92,246,.08) !important; }
+html.light .page-root .bg-violet-500\/12      { background-color: rgba(139,92,246,.12) !important; }
+html.light .page-root .border-violet-500\/18  { border-color: rgba(139,92,246,.28) !important; }
+html.light .page-root .border-violet-500\/28  { border-color: rgba(139,92,246,.35) !important; }
+
+/* keep action buttons white text on colored gradient bg */
+html.light .page-root button[class*="from-[#0077b5]"] { color: #ffffff !important; }
