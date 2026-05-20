@@ -159,17 +159,31 @@ export default function GeneratePage() {
   const [showHistory, setShowHistory]             = useState(false)
   const [history, setHistory]                     = useState<HistoryPost[]>([])
   const [isLoadingHistory, setIsLoadingHistory]   = useState(false)
-  const abortRef = useRef<AbortController | null>(null)
+  const abortRef        = useRef<AbortController | null>(null)
+  const wasGeneratingRef = useRef(false)
 
   const isAnyGenerating = Object.values(posts).some(p => p.isGenerating)
   const hasAnyContent   = Object.values(posts).some(p => p.text || p.error)
 
+  // Fetch real usage count from Supabase on mount
   useEffect(() => {
     fetch('/api/user/plan')
       .then(r => r.ok ? r.json() : null)
       .then(data => data && setPlanInfo(data))
       .catch(() => {})
   }, [])
+
+  // Re-fetch usage count after every generation session completes so the
+  // counter reflects the increment that happened inside /api/generate
+  useEffect(() => {
+    if (wasGeneratingRef.current && !isAnyGenerating) {
+      fetch('/api/user/plan')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => data && setPlanInfo(data))
+        .catch(() => {})
+    }
+    wasGeneratingRef.current = isAnyGenerating
+  }, [isAnyGenerating])
 
   async function startUsageSession(): Promise<boolean> {
     try {

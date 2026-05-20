@@ -155,10 +155,13 @@ export async function POST(request: NextRequest) {
 
       // Increment usage. All 7 parallel calls in a session read the same currentCount
       // and upsert the same new value, so count increments by 1 per session regardless.
-      await supabase.from('daily_usage').upsert(
+      const { error: upsertError } = await supabase.from('daily_usage').upsert(
         { user_id: userId, date: today, count: currentCount + 1 },
         { onConflict: 'user_id,date' }
       )
+      if (upsertError) {
+        console.error('[generate] Failed to increment daily_usage:', upsertError.message)
+      }
     }
 
     const body = await request.json()
