@@ -12,6 +12,14 @@ type PlanInfo = {
   canGenerate: boolean
 }
 
+type HistoryPost = {
+  id: string
+  format: string
+  topic: string
+  content: string
+  created_at: string
+}
+
 const TONES = [
   { value: 'professional',  label: 'Professional',  emoji: '💼' },
   { value: 'casual',        label: 'Casual',         emoji: '😊' },
@@ -114,12 +122,15 @@ type PostState = {
   isLoadingHooks: boolean
   showHooks: boolean
   copiedHookIndex: number | null
+  savedId: string | null
+  isSaving: boolean
 }
 
 const EMPTY_POST: PostState = {
   text: '', isGenerating: false, copied: false, error: '',
   hashtags: [], isLoadingHashtags: false,
   hooks: [], isLoadingHooks: false, showHooks: false, copiedHookIndex: null,
+  savedId: null, isSaving: false,
 }
 
 function initPosts(): Record<string, PostState> {
@@ -145,6 +156,9 @@ export default function GeneratePage() {
   })
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false)
   const [isUpgrading, setIsUpgrading]             = useState(false)
+  const [showHistory, setShowHistory]             = useState(false)
+  const [history, setHistory]                     = useState<HistoryPost[]>([])
+  const [isLoadingHistory, setIsLoadingHistory]   = useState(false)
   const abortRef = useRef<AbortController | null>(null)
 
   const isAnyGenerating = Object.values(posts).some(p => p.isGenerating)
@@ -192,7 +206,56 @@ export default function GeneratePage() {
     }
   }
 
+  async function savePost(formatValue: string) {
+    const post = posts[formatValue]
+    if (!post.text || post.isSaving || post.savedId) return
+    setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], isSaving: true } }))
+    try {
+      const res = await fetch('/api/history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ format: formatValue, topic, content: post.text }),
+      })
+      if (res.ok) {
+        const { post: saved } = await res.json()
+        setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], isSaving: false, savedId: saved.id } }))
+        setHistory(prev => [saved, ...prev])
+      } else {
+        setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], isSaving: false } }))
+      }
+    } catch {
+      setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], isSaving: false } }))
+    }
+  }
+
+  async function loadHistory() {
+    setIsLoadingHistory(true)
+    try {
+      const res = await fetch('/api/history')
+      if (res.ok) {
+        const { posts: saved } = await res.json()
+        setHistory(saved ?? [])
+      }
+    } catch {}
+    setIsLoadingHistory(false)
+  }
+
+  function toggleHistory() {
+    if (!showHistory && history.length === 0) loadHistory()
+    setShowHistory(prev => !prev)
+  }
+
+  async function deleteHistoryPost(id: string) {
+    const res = await fetch('/api/history', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    if (res.ok) setHistory(prev => prev.filter(p => p.id !== id))
+  }
+
   async function fetchHashtags(formatValue: string, text: string) {
+    if (planInfo.plan !== 'pro') return
     setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], isLoadingHashtags: true } }))
     try {
       const res = await fetch('/api/hashtags', {
@@ -541,7 +604,8 @@ export default function GeneratePage() {
             </div>
           </div>
 
-          {/* ── Post Cards Grid ── */}
+          {/* ── Post Cards Grid + History ── */}
+          <div className="min-w-0 space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {FORMATS.map(format => {
               const post      = posts[format.value]
@@ -586,6 +650,20 @@ export default function GeneratePage() {
                             }`}
                           >
                             {post.copied ? '✓ Copied' : '⎘ Copy'}
+                          </button>
+                        )}
+                        {planInfo.plan === 'pro' && post.text && (
+                          <button
+                            onClick={() => savePost(format.value)}
+                            disabled={post.isSaving || !!post.savedId}
+                            title={post.savedId ? 'Saved to history' : 'Save to history'}
+                            className={`px-2 py-1 rounded-lg border text-[10px] font-medium transition-all duration-150 ${
+                              post.savedId
+                                ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+                                : 'border-white/[0.09] text-white/40 hover:bg-white/[0.06] hover:text-white/65 hover:border-white/[0.18]'
+                            } disabled:opacity-40`}
+                          >
+                            {post.isSaving ? '…' : post.savedId ? '✓ Saved' : '⊞ Save'}
                           </button>
                         )}
                         {hasContent && !post.isGenerating && topic.trim() && (
@@ -657,65 +735,90 @@ export default function GeneratePage() {
                         </div>
 
                         {/* Hashtags */}
-                        {(post.hashtags.length > 0 || post.isLoadingHashtags) && (
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            {post.isLoadingHashtags ? (
-                              [36, 52, 44].map((w, i) => (
-                                <div key={i} className="h-4 rounded-full skeleton" style={{ width: `${w}px` }} />
-                              ))
-                            ) : (
-                              post.hashtags.map((tag, i) => (
-                                <span key={i} className="text-[10px] font-medium text-[#38bdf8] bg-[#0077b5]/12 border border-[#0077b5]/22 px-2 py-0.5 rounded-full">
-                                  #{tag}
-                                </span>
-                              ))
-                            )}
+                        {planInfo.plan === 'pro' ? (
+                          (post.hashtags.length > 0 || post.isLoadingHashtags) && (
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {post.isLoadingHashtags ? (
+                                [36, 52, 44].map((w, i) => (
+                                  <div key={i} className="h-4 rounded-full skeleton" style={{ width: `${w}px` }} />
+                                ))
+                              ) : (
+                                post.hashtags.map((tag, i) => (
+                                  <span key={i} className="text-[10px] font-medium text-[#38bdf8] bg-[#0077b5]/12 border border-[#0077b5]/22 px-2 py-0.5 rounded-full">
+                                    #{tag}
+                                  </span>
+                                ))
+                              )}
+                            </div>
+                          )
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[9px] text-white/20 flex items-center gap-1.5">
+                              🔒 Hashtags —{' '}
+                              <button
+                                onClick={handleUpgrade}
+                                disabled={isUpgrading}
+                                className="text-[#38bdf8]/60 hover:text-[#38bdf8] transition-colors"
+                              >
+                                Pro feature
+                              </button>
+                            </span>
                           </div>
                         )}
 
                         {/* Hook optimizer */}
-                        <div>
-                          <button
-                            onClick={() => optimizeHook(format.value)}
-                            disabled={post.isLoadingHooks}
-                            className={`text-[10px] font-medium px-2.5 py-1 rounded-lg border transition-all duration-150 ${
-                              post.showHooks
-                                ? 'bg-violet-500/12 border-violet-500/28 text-violet-300'
-                                : 'border-white/[0.09] bg-white/[0.02] text-white/35 hover:bg-white/[0.06] hover:text-white/60 hover:border-white/[0.15]'
-                            } disabled:opacity-40`}
-                          >
-                            {post.isLoadingHooks ? (
-                              <span className="flex items-center gap-1.5">
-                                <Spinner className="w-3 h-3" />
-                                Optimizing…
-                              </span>
-                            ) : post.showHooks ? '▾ Hide hooks' : '⚡ Optimize hook'}
-                          </button>
+                        {planInfo.plan === 'pro' ? (
+                          <div>
+                            <button
+                              onClick={() => optimizeHook(format.value)}
+                              disabled={post.isLoadingHooks}
+                              className={`text-[10px] font-medium px-2.5 py-1 rounded-lg border transition-all duration-150 ${
+                                post.showHooks
+                                  ? 'bg-violet-500/12 border-violet-500/28 text-violet-300'
+                                  : 'border-white/[0.09] bg-white/[0.02] text-white/35 hover:bg-white/[0.06] hover:text-white/60 hover:border-white/[0.15]'
+                              } disabled:opacity-40`}
+                            >
+                              {post.isLoadingHooks ? (
+                                <span className="flex items-center gap-1.5">
+                                  <Spinner className="w-3 h-3" />
+                                  Optimizing…
+                                </span>
+                              ) : post.showHooks ? '▾ Hide hooks' : '⚡ Optimize hook'}
+                            </button>
 
-                          {post.showHooks && post.hooks.length > 0 && (
-                            <div className="mt-2 space-y-1.5">
-                              {post.hooks.map((hook, i) => (
-                                <div
-                                  key={i}
-                                  className="flex items-start gap-2 p-2.5 rounded-xl bg-violet-500/8 border border-violet-500/18 group/hook"
-                                >
-                                  <span className="text-[9px] font-bold text-violet-400/60 mt-0.5 shrink-0 font-mono">{i + 1}</span>
-                                  <p className="flex-1 text-[11px] text-white/60 leading-snug">{hook}</p>
-                                  <button
-                                    onClick={() => copyHook(format.value, i, hook)}
-                                    className={`shrink-0 text-[9px] font-medium px-1.5 py-0.5 rounded border transition-all opacity-0 group-hover/hook:opacity-100 ${
-                                      post.copiedHookIndex === i
-                                        ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
-                                        : 'border-violet-500/25 text-violet-400 hover:bg-violet-500/12'
-                                    }`}
+                            {post.showHooks && post.hooks.length > 0 && (
+                              <div className="mt-2 space-y-1.5">
+                                {post.hooks.map((hook, i) => (
+                                  <div
+                                    key={i}
+                                    className="flex items-start gap-2 p-2.5 rounded-xl bg-violet-500/8 border border-violet-500/18 group/hook"
                                   >
-                                    {post.copiedHookIndex === i ? '✓' : '⎘'}
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                                    <span className="text-[9px] font-bold text-violet-400/60 mt-0.5 shrink-0 font-mono">{i + 1}</span>
+                                    <p className="flex-1 text-[11px] text-white/60 leading-snug">{hook}</p>
+                                    <button
+                                      onClick={() => copyHook(format.value, i, hook)}
+                                      className={`shrink-0 text-[9px] font-medium px-1.5 py-0.5 rounded border transition-all opacity-0 group-hover/hook:opacity-100 ${
+                                        post.copiedHookIndex === i
+                                          ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+                                          : 'border-violet-500/25 text-violet-400 hover:bg-violet-500/12'
+                                      }`}
+                                    >
+                                      {post.copiedHookIndex === i ? '✓' : '⎘'}
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <button
+                            onClick={handleUpgrade}
+                            disabled={isUpgrading}
+                            className="text-[9px] font-medium px-2.5 py-1 rounded-lg border border-white/[0.09] bg-white/[0.02] text-white/20 flex items-center gap-1.5 hover:border-[#0077b5]/30 hover:text-[#38bdf8]/60 transition-all"
+                          >
+                            🔒 Hook optimizer — Pro feature
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -723,6 +826,73 @@ export default function GeneratePage() {
               )
             })}
           </div>
+
+          {/* History panel (Pro only) */}
+          {planInfo.plan === 'pro' && (
+            <div className="rounded-2xl border border-white/[0.09] bg-white/[0.02] backdrop-blur-xl p-5">
+              <button
+                onClick={toggleHistory}
+                className="flex items-center gap-2 text-sm font-medium text-white/45 hover:text-white/70 transition-colors w-full text-left"
+              >
+                <span className="text-xs">{showHistory ? '▾' : '▸'}</span>
+                Post history
+                {history.length > 0 && (
+                  <span className="text-xs text-white/25 font-normal">({history.length} saved)</span>
+                )}
+              </button>
+
+              {showHistory && (
+                <div className="mt-4 space-y-3">
+                  {isLoadingHistory ? (
+                    <p className="text-sm text-white/25 py-6 text-center">Loading…</p>
+                  ) : history.length === 0 ? (
+                    <p className="text-sm text-white/25 py-6 text-center">
+                      No saved posts yet. Click <span className="font-mono">⊞ Save</span> on any post.
+                    </p>
+                  ) : (
+                    history.map(p => (
+                      <div key={p.id} className="flex gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <span className="text-[9px] font-bold uppercase tracking-widest text-white/30">
+                              {p.format.replace('_', ' ')}
+                            </span>
+                            <span className="text-[9px] text-white/20">
+                              {new Date(p.created_at).toLocaleDateString()}
+                            </span>
+                            {p.topic && (
+                              <span className="text-[9px] text-white/20 truncate max-w-[180px]">{p.topic}</span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-white/50 leading-relaxed line-clamp-3 overflow-hidden">
+                            {p.content}
+                          </p>
+                        </div>
+                        <div className="flex flex-col gap-1.5 flex-shrink-0">
+                          <button
+                            onClick={() => navigator.clipboard.writeText(p.content)}
+                            title="Copy"
+                            className="px-2 py-1 rounded-lg border border-white/[0.09] text-[10px] text-white/40 hover:text-white/65 hover:border-white/[0.18] transition-all"
+                          >
+                            ⎘
+                          </button>
+                          <button
+                            onClick={() => deleteHistoryPost(p.id)}
+                            title="Delete"
+                            className="px-2 py-1 rounded-lg border border-white/[0.09] text-[10px] text-white/40 hover:text-red-400/70 hover:border-red-500/25 transition-all"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          </div>{/* end cards + history wrapper */}
 
         </div>
       </main>

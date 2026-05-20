@@ -16,3 +16,15 @@ CREATE TABLE IF NOT EXISTS daily_usage (
   count INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (user_id, date)
 );
+
+-- Stores posts saved by Pro users
+CREATE TABLE IF NOT EXISTS post_history (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  format TEXT NOT NULL,
+  topic TEXT NOT NULL DEFAULT '',
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS post_history_user_id_idx ON post_history (user_id, created_at DESC);

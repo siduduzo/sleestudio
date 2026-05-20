@@ -496,9 +496,15 @@ export default function LandingPage() {
                 <p className="text-sm text-white/30">Everything you need to get started.</p>
               </div>
               <ul className="space-y-3 mb-10 flex-1">
-                {['5 generations per day', 'All 7 post formats', 'Hook optimizer', 'Smart hashtags', 'Copy to clipboard'].map(f => (
+                {['5 generations per day', 'All 7 post formats', 'Copy to clipboard'].map(f => (
                   <li key={f} className="flex items-center gap-3 text-sm text-white/50">
                     <span className="w-4 h-4 rounded-full border border-white/15 flex items-center justify-center text-[9px] text-white/30 flex-shrink-0">✓</span>
+                    {f}
+                  </li>
+                ))}
+                {['Smart hashtags', 'Hook optimizer', 'Post history'].map(f => (
+                  <li key={f} className="flex items-center gap-3 text-sm text-white/25">
+                    <span className="w-4 h-4 rounded-full border border-white/[0.08] flex items-center justify-center text-[9px] flex-shrink-0">🔒</span>
                     {f}
                   </li>
                 ))}
