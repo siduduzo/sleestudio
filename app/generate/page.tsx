@@ -30,8 +30,8 @@ const TONES = [
 
 const FORMATS = [
   {
-    value: 'story',
-    label: 'Story',
+    value: 'founder_insight',
+    label: 'Founder Insight',
     badge:      'text-purple-300 bg-purple-500/10 border-purple-500/25',
     cursor:     'bg-purple-400',
     border:     'border-purple-500/20',
@@ -41,8 +41,8 @@ const FORMATS = [
     accent:     '#a855f7',
   },
   {
-    value: 'listicle',
-    label: 'Listicle',
+    value: 'agency_buying_signal',
+    label: 'Agency Buying Signal',
     badge:      'text-blue-300 bg-blue-500/10 border-blue-500/25',
     cursor:     'bg-blue-400',
     border:     'border-blue-500/20',
@@ -52,8 +52,8 @@ const FORMATS = [
     accent:     '#3b82f6',
   },
   {
-    value: 'framework',
-    label: 'Framework',
+    value: 'opportunity_breakdown',
+    label: 'Opportunity Breakdown',
     badge:      'text-teal-300 bg-teal-500/10 border-teal-500/25',
     cursor:     'bg-teal-400',
     border:     'border-teal-500/20',
@@ -63,8 +63,8 @@ const FORMATS = [
     accent:     '#14b8a6',
   },
   {
-    value: 'contrarian',
-    label: 'Contrarian',
+    value: 'mistake_to_avoid',
+    label: 'Mistake to Avoid',
     badge:      'text-rose-300 bg-rose-500/10 border-rose-500/25',
     cursor:     'bg-rose-400',
     border:     'border-rose-500/20',
@@ -74,8 +74,8 @@ const FORMATS = [
     accent:     '#f43f5e',
   },
   {
-    value: 'data_insight',
-    label: 'Data Insight',
+    value: 'teaming_partner_angle',
+    label: 'Teaming Partner Angle',
     badge:      'text-amber-300 bg-amber-500/10 border-amber-500/25',
     cursor:     'bg-amber-400',
     border:     'border-amber-500/20',
@@ -85,8 +85,8 @@ const FORMATS = [
     accent:     '#f59e0b',
   },
   {
-    value: 'quick_win',
-    label: 'Quick Win',
+    value: 'small_business_office_outreach',
+    label: 'SB Office Outreach',
     badge:      'text-emerald-300 bg-emerald-500/10 border-emerald-500/25',
     cursor:     'bg-emerald-400',
     border:     'border-emerald-500/20',
@@ -96,8 +96,8 @@ const FORMATS = [
     accent:     '#10b981',
   },
   {
-    value: 'carousel',
-    label: 'Carousel',
+    value: 'carousel_brief',
+    label: 'Carousel Brief',
     badge:      'text-orange-300 bg-orange-500/10 border-orange-500/25',
     cursor:     'bg-orange-400',
     border:     'border-orange-500/20',
@@ -114,6 +114,8 @@ const MAX_CHARS = 3000
 type PostState = {
   text: string
   isGenerating: boolean
+  isRefining: boolean
+  hasBeenRefined: boolean
   copied: boolean
   error: string
   hashtags: string[]
@@ -127,7 +129,7 @@ type PostState = {
 }
 
 const EMPTY_POST: PostState = {
-  text: '', isGenerating: false, copied: false, error: '',
+  text: '', isGenerating: false, isRefining: false, hasBeenRefined: false, copied: false, error: '',
   hashtags: [], isLoadingHashtags: false,
   hooks: [], isLoadingHooks: false, showHooks: false, copiedHookIndex: null,
   savedId: null, isSaving: false,
@@ -147,9 +149,11 @@ function Spinner({ className = '' }: { className?: string }) {
 }
 
 export default function GeneratePage() {
-  const [topic, setTopic]       = useState('')
-  const [tone, setTone]         = useState('professional')
-  const [audience, setAudience] = useState('')
+  const [topic, setTopic]                   = useState('')
+  const [tone, setTone]                     = useState('professional')
+  const [audience, setAudience]             = useState('')
+  const [sourceMaterial, setSourceMaterial] = useState('')
+  const [govconMode, setGovconMode]         = useState(false)
   const [posts, setPosts]       = useState<Record<string, PostState>>(initPosts)
   const [planInfo, setPlanInfo] = useState<PlanInfo>({
     plan: 'free', dailyUsage: 0, dailyLimit: 5, canGenerate: true,
@@ -162,7 +166,7 @@ export default function GeneratePage() {
   const abortRef        = useRef<AbortController | null>(null)
   const wasGeneratingRef = useRef(false)
 
-  const isAnyGenerating = Object.values(posts).some(p => p.isGenerating)
+  const isAnyGenerating = Object.values(posts).some(p => p.isGenerating || p.isRefining)
   const hasAnyContent   = Object.values(posts).some(p => p.text || p.error)
 
   // Fetch real usage count from Supabase on mount
@@ -300,6 +304,8 @@ export default function GeneratePage() {
     const capturedTopic    = topic.trim()
     const capturedTone     = tone
     const capturedAudience = audience.trim()
+    const capturedSource   = sourceMaterial.trim().slice(0, 3000)
+    const capturedGovcon   = govconMode
 
     setPosts(Object.fromEntries(FORMATS.map(f => [f.value, { ...EMPTY_POST, isGenerating: true }])))
 
@@ -309,7 +315,7 @@ export default function GeneratePage() {
         const res = await fetch('/api/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ topic: capturedTopic, tone: capturedTone, format: format.value, audience: capturedAudience }),
+          body: JSON.stringify({ topic: capturedTopic, tone: capturedTone, format: format.value, audience: capturedAudience, sourceMaterial: capturedSource, govconMode: capturedGovcon }),
           signal: ctrl.signal,
         })
         if (!res.ok) {
@@ -354,7 +360,7 @@ export default function GeneratePage() {
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: topic.trim(), tone, format: formatValue, audience: audience.trim() }),
+        body: JSON.stringify({ topic: topic.trim(), tone, format: formatValue, audience: audience.trim(), sourceMaterial: sourceMaterial.trim().slice(0, 3000), govconMode }),
       })
       if (!res.ok) {
         const data = await res.json()
@@ -382,6 +388,65 @@ export default function GeneratePage() {
       return
     }
     setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], isGenerating: false } }))
+    if (accumulated) fetchHashtags(formatValue, accumulated)
+  }
+
+  async function refinePost(formatValue: string) {
+    const post = posts[formatValue]
+    if (!post.text || post.isRefining || post.isGenerating) return
+
+    const originalText = post.text
+    setPosts(prev => ({ ...prev, [formatValue]: {
+      ...prev[formatValue],
+      isRefining: true,
+      text: '',
+      error: '',
+      hashtags: [],
+      hooks: [],
+      showHooks: false,
+      copiedHookIndex: null,
+      savedId: null,
+    }}))
+
+    let accumulated = ''
+    try {
+      const res = await fetch('/api/refine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          format: formatValue,
+          tone,
+          existingContent: originalText,
+          sourceMaterial: sourceMaterial.trim().slice(0, 3000),
+          govconMode,
+        }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Refine failed')
+      }
+      const reader  = res.body!.getReader()
+      const decoder = new TextDecoder()
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        const chunk = decoder.decode(value, { stream: true })
+        accumulated += chunk
+        setPosts(prev => ({
+          ...prev,
+          [formatValue]: { ...prev[formatValue], text: prev[formatValue].text + chunk },
+        }))
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setPosts(prev => ({
+          ...prev,
+          [formatValue]: { ...prev[formatValue], isRefining: false, text: originalText, error: err.message },
+        }))
+      }
+      return
+    }
+    setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], isRefining: false, hasBeenRefined: true } }))
     if (accumulated) fetchHashtags(formatValue, accumulated)
   }
 
@@ -537,6 +602,57 @@ export default function GeneratePage() {
                 />
               </div>
 
+              {/* Source Material */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-medium text-white/45">
+                  Source Material / Evidence
+                  <span className="ml-1.5 text-[10px] text-white/25 font-normal normal-case tracking-normal">optional</span>
+                </label>
+                <textarea
+                  value={sourceMaterial}
+                  onChange={e => setSourceMaterial(e.target.value)}
+                  placeholder={"Paste SAM.gov opportunity text, USAspending contract data, agency report, capability statement, YouTube transcript, blog article, or client notes…"}
+                  className="w-full h-24 px-3.5 py-3 text-sm bg-white/[0.04] border border-white/[0.08] rounded-xl resize-none text-white placeholder-white/20 focus:outline-none focus:ring-1 focus:ring-[#0077b5]/50 focus:border-[#0077b5]/40 transition-all leading-relaxed"
+                />
+                {sourceMaterial.trim() && (
+                  <p className="text-[10px] flex items-center gap-1 flex-wrap">
+                    <span className={`w-1 h-1 rounded-full inline-block shrink-0 ${sourceMaterial.trim().length > 3000 ? 'bg-amber-400/60' : 'bg-emerald-400/60'}`} />
+                    <span className={sourceMaterial.trim().length > 3000 ? 'text-amber-400/70' : 'text-emerald-400/60'}>
+                      {sourceMaterial.trim().length.toLocaleString()} chars
+                      {sourceMaterial.trim().length > 3000 ? ' — will be trimmed to 3,000 for the prompt' : ' — ready'}
+                    </span>
+                  </p>
+                )}
+              </div>
+
+              {/* GovCon Data Mode toggle */}
+              <button
+                type="button"
+                onClick={() => setGovconMode(prev => !prev)}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border transition-all duration-200 ${
+                  govconMode
+                    ? 'bg-amber-500/10 border-amber-500/35 text-amber-300'
+                    : 'bg-white/[0.02] border-white/[0.08] text-white/35 hover:border-white/[0.15] hover:text-white/55'
+                }`}
+              >
+                <span className="flex items-center gap-2 text-xs font-medium">
+                  <span className={`text-sm ${govconMode ? 'opacity-100' : 'opacity-40'}`}>🏛️</span>
+                  GovCon Data Mode
+                </span>
+                <span className={`text-[10px] font-bold tracking-wide px-2 py-0.5 rounded-full border transition-all ${
+                  govconMode
+                    ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
+                    : 'bg-white/[0.04] border-white/[0.09] text-white/20'
+                }`}>
+                  {govconMode ? 'ON' : 'OFF'}
+                </span>
+              </button>
+              {govconMode && (
+                <p className="text-[10px] text-amber-400/60 leading-relaxed -mt-1 px-0.5">
+                  AI will use only facts from your source material — no invented stats, agencies, or case studies.
+                </p>
+              )}
+
               {/* Tone */}
               <div className="space-y-2">
                 <label className="block text-xs font-medium text-white/45">Tone</label>
@@ -680,7 +796,7 @@ export default function GeneratePage() {
                             {post.isSaving ? '…' : post.savedId ? '✓ Saved' : '⊞ Save'}
                           </button>
                         )}
-                        {hasContent && !post.isGenerating && topic.trim() && (
+                        {hasContent && !post.isGenerating && !post.isRefining && topic.trim() && (
                           <button
                             onClick={() => regenerateSingle(format.value)}
                             title="Regenerate"
@@ -688,6 +804,22 @@ export default function GeneratePage() {
                           >
                             ↻
                           </button>
+                        )}
+                        {post.text && !post.isGenerating && topic.trim() && (
+                          post.isRefining ? (
+                            <span className="text-[10px] text-violet-400/60 flex items-center gap-1.5 px-1">
+                              <Spinner className="w-3 h-3" />
+                              Refining…
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => refinePost(format.value)}
+                              title="Editorial polish — improve voice, remove AI-isms, keep all facts"
+                              className="px-2 py-1 rounded-lg border border-white/[0.09] text-[10px] font-medium text-white/40 hover:bg-violet-500/8 hover:text-violet-300/70 hover:border-violet-500/20 transition-all duration-150"
+                            >
+                              {post.hasBeenRefined ? '↺ Re-refine' : '✦ Refine'}
+                            </button>
+                          )
                         )}
                       </div>
                     </div>
@@ -700,7 +832,7 @@ export default function GeneratePage() {
                     )}
 
                     {/* Empty state */}
-                    {!post.text && !post.isGenerating && !post.error && (
+                    {!post.text && !post.isGenerating && !post.isRefining && !post.error && (
                       <div className="flex-1 flex flex-col items-center justify-center gap-2 select-none">
                         <div className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center text-white/15 text-sm">
                           ✦
@@ -710,7 +842,7 @@ export default function GeneratePage() {
                     )}
 
                     {/* Skeleton shimmer */}
-                    {post.isGenerating && !post.text && (
+                    {(post.isGenerating || post.isRefining) && !post.text && (
                       <div className="flex-1 space-y-2 pt-1">
                         {[82, 100, 64, 88, 52, 76, 95, 60].map((w, i) => (
                           <div
@@ -726,7 +858,7 @@ export default function GeneratePage() {
                     {post.text && (
                       <div className="flex-1 text-sm text-white/90 leading-[1.85] whitespace-pre-wrap">
                         {post.text}
-                        {post.isGenerating && (
+                        {(post.isGenerating || post.isRefining) && (
                           <span
                             className={`inline-block w-[3px] h-[0.95em] ml-0.5 align-middle animate-pulse rounded-sm ${format.cursor}`}
                           />
@@ -735,7 +867,7 @@ export default function GeneratePage() {
                     )}
 
                     {/* Footer */}
-                    {post.text && !post.isGenerating && (
+                    {post.text && !post.isGenerating && !post.isRefining && (
                       <div className="mt-4 pt-3.5 border-t border-white/[0.06] space-y-3">
 
                         {/* Char progress bar */}
