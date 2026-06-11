@@ -438,12 +438,15 @@ export default function GeneratePage() {
         }))
       }
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setPosts(prev => ({
-          ...prev,
-          [formatValue]: { ...prev[formatValue], isRefining: false, text: originalText, error: err.message },
-        }))
-      }
+      const msg = err instanceof Error ? err.message : 'Refine failed. Please try again.'
+      setPosts(prev => ({
+        ...prev,
+        [formatValue]: { ...prev[formatValue], isRefining: false, text: originalText, error: msg },
+      }))
+      return
+    }
+    if (!accumulated) {
+      setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], isRefining: false, text: originalText, error: 'No response received. Please try again.' } }))
       return
     }
     setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], isRefining: false, hasBeenRefined: true } }))
