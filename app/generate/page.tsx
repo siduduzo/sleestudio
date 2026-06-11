@@ -283,6 +283,8 @@ export default function GeneratePage() {
   const [sourceMaterial, setSourceMaterial] = useState('')
   const [govconMode, setGovconMode]         = useState(false)
   const [extractedEvidence, setExtractedEvidence] = useState<ExtractedEvidence | null>(null)
+  const [suggestedTopics, setSuggestedTopics]     = useState<string[] | null>(null)
+  const [isLoadingTopics, setIsLoadingTopics]     = useState(false)
   const [posts, setPosts]       = useState<Record<string, PostState>>(initPosts)
   const [planInfo, setPlanInfo] = useState<PlanInfo>({
     plan: 'free', dailyUsage: 0, dailyLimit: 5, canGenerate: true,
@@ -608,6 +610,30 @@ export default function GeneratePage() {
     if (accumulated) fetchHashtags(formatValue, accumulated)
   }
 
+  async function suggestTopics() {
+    if (!sourceMaterial.trim() || isLoadingTopics) return
+    setIsLoadingTopics(true)
+    setSuggestedTopics(null)
+    try {
+      const res = await fetch('/api/suggest-topics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sourceMaterial: sourceMaterial.trim().slice(0, 3000) }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setSuggestedTopics([])
+        console.error('Suggest-topics error:', data.error)
+      } else {
+        setSuggestedTopics(data.topics ?? [])
+      }
+    } catch {
+      setSuggestedTopics([])
+    } finally {
+      setIsLoadingTopics(false)
+    }
+  }
+
   async function optimizeHook(formatValue: string) {
     const post = posts[formatValue]
     if (!post.text || post.isLoadingHooks) return
@@ -768,7 +794,7 @@ export default function GeneratePage() {
                 </label>
                 <textarea
                   value={sourceMaterial}
-                  onChange={e => { setSourceMaterial(e.target.value); setExtractedEvidence(null) }}
+                  onChange={e => { setSourceMaterial(e.target.value); setExtractedEvidence(null); setSuggestedTopics(null) }}
                   placeholder={"Paste SAM.gov opportunity text, USAspending contract data, agency report, capability statement, YouTube transcript, blog article, or client notes…"}
                   className="w-full h-24 px-3.5 py-3 text-sm bg-white/[0.04] border border-white/[0.08] rounded-xl resize-none text-white placeholder-white/20 focus:outline-none focus:ring-1 focus:ring-[#0077b5]/50 focus:border-[#0077b5]/40 transition-all leading-relaxed"
                 />
@@ -783,15 +809,26 @@ export default function GeneratePage() {
                 )}
               </div>
 
-              {/* Extract Evidence button */}
+              {/* Extract Evidence + Suggest Topics buttons */}
               {sourceMaterial.trim() && (
-                <button
-                  type="button"
-                  onClick={() => setExtractedEvidence(parseEvidence(sourceMaterial))}
-                  className="text-[10px] font-medium px-2.5 py-1 rounded-lg border border-amber-500/25 text-amber-400/70 bg-amber-500/5 hover:bg-amber-500/10 hover:text-amber-300 hover:border-amber-500/40 transition-all"
-                >
-                  {extractedEvidence ? '↻ Re-extract Evidence' : '⊕ Extract Evidence'}
-                </button>
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setExtractedEvidence(parseEvidence(sourceMaterial))}
+                    className="text-[10px] font-medium px-2.5 py-1 rounded-lg border border-amber-500/25 text-amber-400/70 bg-amber-500/5 hover:bg-amber-500/10 hover:text-amber-300 hover:border-amber-500/40 transition-all"
+                  >
+                    {extractedEvidence ? '↻ Re-extract Evidence' : '⊕ Extract Evidence'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={suggestTopics}
+                    disabled={isLoadingTopics}
+                    className="flex items-center gap-1.5 text-[10px] font-medium px-2.5 py-1 rounded-lg border border-sky-500/25 text-sky-400/70 bg-sky-500/5 hover:bg-sky-500/10 hover:text-sky-300 hover:border-sky-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoadingTopics && <Spinner className="w-2.5 h-2.5" />}
+                    {isLoadingTopics ? 'Thinking…' : '💡 Suggest Topics'}
+                  </button>
+                </div>
               )}
 
               {/* Evidence Summary panel */}
@@ -811,6 +848,25 @@ export default function GeneratePage() {
                       <span className="text-[9px] font-bold text-white/25 uppercase tracking-wider w-16 shrink-0 pt-px">{label}</span>
                       <span className={`text-[10px] leading-relaxed break-words min-w-0 ${value === '[not found]' ? 'text-white/20 italic' : 'text-white/65'}`}>{value}</span>
                     </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Suggested Topics panel */}
+              {suggestedTopics !== null && (
+                <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 p-3 space-y-1.5">
+                  <p className="text-[9px] font-bold text-sky-400/50 uppercase tracking-widest mb-2">
+                    {suggestedTopics.length === 0 ? 'No suggestions returned — try again' : 'Suggested Topics'}
+                  </p>
+                  {suggestedTopics.map((t, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => { setTopic(t); setSuggestedTopics(null) }}
+                      className="block w-full text-left text-[10px] leading-relaxed text-white/65 hover:text-white/90 px-2 py-1.5 rounded-lg hover:bg-sky-500/10 transition-all"
+                    >
+                      {t}
+                    </button>
                   ))}
                 </div>
               )}
