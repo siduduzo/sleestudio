@@ -44,3 +44,6 @@ next-env.d.ts
 clerk api.txt
 
 .vercel
+
+# clerk configuration (can include secrets)
+/.clerk/
