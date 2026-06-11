@@ -311,12 +311,75 @@ export default function GeneratePage() {
 
     FORMATS.forEach(async (format) => {
       let accumulated = ''
+      let lastError = ''
+      for (let attempt = 0; attempt < 2; attempt++) {
+        if (attempt === 1) {
+          accumulated = ''
+          setPosts(prev => ({ ...prev, [format.value]: { ...prev[format.value], text: '' } }))
+        }
+        try {
+          const res = await fetch('/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ topic: capturedTopic, tone: capturedTone, format: format.value, audience: capturedAudience, sourceMaterial: capturedSource, govconMode: capturedGovcon }),
+            signal: ctrl.signal,
+          })
+          if (!res.ok) {
+            const data = await res.json()
+            throw new Error(data.error || 'Generation failed')
+          }
+          const reader  = res.body!.getReader()
+          const decoder = new TextDecoder()
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            const chunk = decoder.decode(value, { stream: true })
+            accumulated += chunk
+            setPosts(prev => ({
+              ...prev,
+              [format.value]: { ...prev[format.value], text: prev[format.value].text + chunk },
+            }))
+          }
+          if (accumulated) { lastError = ''; break }
+          lastError = 'No response received. Please try again.'
+        } catch (err: unknown) {
+          if (err instanceof Error && err.name === 'AbortError') return
+          lastError = err instanceof Error ? err.message : 'Generation failed. Please try again.'
+          accumulated = ''
+        }
+      }
+      if (lastError) {
+        setPosts(prev => ({
+          ...prev,
+          [format.value]: { ...prev[format.value], isGenerating: false, error: lastError },
+        }))
+        return
+      }
+      setPosts(prev => ({ ...prev, [format.value]: { ...prev[format.value], isGenerating: false } }))
+      if (accumulated) fetchHashtags(format.value, accumulated)
+    })
+  }
+
+  async function regenerateSingle(formatValue: string) {
+    if (!topic.trim() || posts[formatValue].isGenerating) return
+
+    const allowed = await startUsageSession()
+    if (!allowed) return
+
+    const originalText = posts[formatValue].text
+    setPosts(prev => ({ ...prev, [formatValue]: { ...EMPTY_POST, isGenerating: true } }))
+    let accumulated = ''
+    let lastError = ''
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (attempt === 1) {
+        accumulated = ''
+        setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], text: '' } }))
+      }
       try {
         const res = await fetch('/api/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ topic: capturedTopic, tone: capturedTone, format: format.value, audience: capturedAudience, sourceMaterial: capturedSource, govconMode: capturedGovcon }),
-          signal: ctrl.signal,
+          body: JSON.stringify({ topic: topic.trim(), tone, format: formatValue, audience: audience.trim(), sourceMaterial: sourceMaterial.trim().slice(0, 3000), govconMode }),
         })
         if (!res.ok) {
           const data = await res.json()
@@ -331,60 +394,18 @@ export default function GeneratePage() {
           accumulated += chunk
           setPosts(prev => ({
             ...prev,
-            [format.value]: { ...prev[format.value], text: prev[format.value].text + chunk },
+            [formatValue]: { ...prev[formatValue], text: prev[formatValue].text + chunk },
           }))
         }
+        if (accumulated) { lastError = ''; break }
+        lastError = 'No response received. Please try again.'
       } catch (err: unknown) {
-        if (err instanceof Error && err.name !== 'AbortError') {
-          setPosts(prev => ({
-            ...prev,
-            [format.value]: { ...prev[format.value], isGenerating: false, error: err.message },
-          }))
-        }
-        return
+        lastError = err instanceof Error ? err.message : 'Generation failed. Please try again.'
+        accumulated = ''
       }
-      setPosts(prev => ({ ...prev, [format.value]: { ...prev[format.value], isGenerating: false } }))
-      if (accumulated) fetchHashtags(format.value, accumulated)
-    })
-  }
-
-  async function regenerateSingle(formatValue: string) {
-    if (!topic.trim() || posts[formatValue].isGenerating) return
-
-    const allowed = await startUsageSession()
-    if (!allowed) return
-
-    setPosts(prev => ({ ...prev, [formatValue]: { ...EMPTY_POST, isGenerating: true } }))
-    let accumulated = ''
-    try {
-      const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: topic.trim(), tone, format: formatValue, audience: audience.trim(), sourceMaterial: sourceMaterial.trim().slice(0, 3000), govconMode }),
-      })
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Generation failed')
-      }
-      const reader  = res.body!.getReader()
-      const decoder = new TextDecoder()
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        const chunk = decoder.decode(value, { stream: true })
-        accumulated += chunk
-        setPosts(prev => ({
-          ...prev,
-          [formatValue]: { ...prev[formatValue], text: prev[formatValue].text + chunk },
-        }))
-      }
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setPosts(prev => ({
-          ...prev,
-          [formatValue]: { ...prev[formatValue], isGenerating: false, error: err.message },
-        }))
-      }
+    }
+    if (lastError) {
+      setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], isGenerating: false, text: originalText, error: lastError } }))
       return
     }
     setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], isGenerating: false } }))
@@ -409,44 +430,49 @@ export default function GeneratePage() {
     }}))
 
     let accumulated = ''
-    try {
-      const res = await fetch('/api/refine', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          format: formatValue,
-          tone,
-          existingContent: originalText,
-          sourceMaterial: sourceMaterial.trim().slice(0, 3000),
-          govconMode,
-        }),
-      })
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Refine failed')
+    let lastError = ''
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (attempt === 1) {
+        accumulated = ''
+        setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], text: '' } }))
       }
-      const reader  = res.body!.getReader()
-      const decoder = new TextDecoder()
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        const chunk = decoder.decode(value, { stream: true })
-        accumulated += chunk
-        setPosts(prev => ({
-          ...prev,
-          [formatValue]: { ...prev[formatValue], text: prev[formatValue].text + chunk },
-        }))
+      try {
+        const res = await fetch('/api/refine', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            format: formatValue,
+            tone,
+            existingContent: originalText,
+            sourceMaterial: sourceMaterial.trim().slice(0, 3000),
+            govconMode,
+          }),
+        })
+        if (!res.ok) {
+          const data = await res.json()
+          throw new Error(data.error || 'Refine failed')
+        }
+        const reader  = res.body!.getReader()
+        const decoder = new TextDecoder()
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          const chunk = decoder.decode(value, { stream: true })
+          accumulated += chunk
+          setPosts(prev => ({
+            ...prev,
+            [formatValue]: { ...prev[formatValue], text: prev[formatValue].text + chunk },
+          }))
+        }
+        if (accumulated) { lastError = ''; break }
+        lastError = 'No response received. Please try again.'
+      } catch (err: unknown) {
+        lastError = err instanceof Error ? err.message : 'Refine failed. Please try again.'
+        accumulated = ''
       }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Refine failed. Please try again.'
-      setPosts(prev => ({
-        ...prev,
-        [formatValue]: { ...prev[formatValue], isRefining: false, text: originalText, error: msg },
-      }))
-      return
     }
-    if (!accumulated) {
-      setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], isRefining: false, text: originalText, error: 'No response received. Please try again.' } }))
+    if (lastError) {
+      setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], isRefining: false, text: originalText, error: lastError } }))
       return
     }
     setPosts(prev => ({ ...prev, [formatValue]: { ...prev[formatValue], isRefining: false, hasBeenRefined: true } }))
