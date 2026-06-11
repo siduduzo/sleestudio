@@ -73,12 +73,35 @@ export async function POST(request: NextRequest) {
 
     const raw = message.content[0].type === 'text' ? message.content[0].text.trim() : ''
 
-    let topics: string[]
+    // Strip markdown fences (e.g. ```json ... ```) that the model sometimes adds
+    const stripped = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+
+    let topics: string[] | null = null
     try {
-      const parsed = JSON.parse(raw)
-      if (!Array.isArray(parsed)) throw new Error('not an array')
-      topics = parsed.filter((t): t is string => typeof t === 'string').slice(0, 5)
+      const parsed = JSON.parse(stripped)
+      if (Array.isArray(parsed)) {
+        topics = parsed.filter((t): t is string => typeof t === 'string').slice(0, 5)
+      }
     } catch {
+      // fall through to regex fallback
+    }
+
+    if (!topics) {
+      // Fallback: extract the first [...] array literal from the raw text
+      const match = /\[[\s\S]*\]/.exec(raw)
+      if (match) {
+        try {
+          const parsed = JSON.parse(match[0])
+          if (Array.isArray(parsed)) {
+            topics = parsed.filter((t): t is string => typeof t === 'string').slice(0, 5)
+          }
+        } catch {
+          // fall through
+        }
+      }
+    }
+
+    if (!topics) {
       return Response.json({ error: 'Failed to parse topic suggestions' }, { status: 500 })
     }
 
