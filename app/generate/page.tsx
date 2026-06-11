@@ -148,12 +148,141 @@ function Spinner({ className = '' }: { className?: string }) {
   )
 }
 
+// ── Evidence extraction (pure JS, no API) ─────────────────────────────────
+
+type ExtractedEvidence = {
+  agencies:  string[]
+  naics:     string[]
+  setAsides: string[]
+  vehicles:  string[]
+  dollars:   string[]
+  dates:     string[]
+  keywords:  string[]
+}
+
+const KNOWN_AGENCIES = [
+  'Department of Veterans Affairs',
+  'Department of Defense',
+  'Department of Homeland Security',
+  'Department of Health and Human Services',
+  'Department of Justice',
+  'Department of State',
+  'Department of Transportation',
+  'Department of Energy',
+  'Department of Education',
+  'Department of Agriculture',
+  'Department of Commerce',
+  'Department of Labor',
+  'Department of Housing and Urban Development',
+  'Department of the Interior',
+  'Department of the Treasury',
+  'Department of the Army',
+  'Department of the Navy',
+  'Department of the Air Force',
+  'General Services Administration',
+  'Small Business Administration',
+  'Social Security Administration',
+  'Environmental Protection Agency',
+  'National Aeronautics and Space Administration',
+  'Centers for Medicare and Medicaid Services',
+  'Centers for Disease Control and Prevention',
+  'Transportation Security Administration',
+  'Customs and Border Protection',
+  'Federal Bureau of Investigation',
+]
+
+function uniq(arr: string[]): string[] {
+  return [...new Set(arr.map(s => s.trim().toLowerCase()).filter(Boolean))]
+}
+
+function parseEvidence(text: string): ExtractedEvidence {
+  let m: RegExpExecArray | null = null
+
+  // Agencies — explicit label first
+  const labelRe = /(?:agency|department|office|issuing\s+agency|contracting\s+(?:agency|office)|component)\s*:\s*([^\n,;]{3,80})/gi
+  const agencies: string[] = []
+  while ((m = labelRe.exec(text)) !== null) agencies.push(m[1])
+  // Agencies — known full names
+  for (const name of KNOWN_AGENCIES) {
+    if (new RegExp(name, 'i').test(text)) agencies.push(name)
+  }
+
+  // NAICS — labeled preferred, bare 6-digit fallback
+  const naicsRe = /\bNAICS\s*(?:Code|#|:)?\s*(\d{6})\b/gi
+  const naics: string[] = []
+  while ((m = naicsRe.exec(text)) !== null) naics.push(m[1])
+  if (naics.length === 0) {
+    const bareRe = /\b(\d{6})\b/g
+    while ((m = bareRe.exec(text)) !== null) naics.push(m[1])
+  }
+
+  // Set-asides
+  const saRe = /\b(SDVOSB|VOSB|Service[- ]Disabled Veteran[- ]Owned(?:\s+Small Business)?|8\(a\)|HUBZone|WOSB|EDWOSB|Women[- ]Owned Small Business|Total Small Business|Small Business Set[- ]?Aside|Sole\s+Source|Full\s+and\s+Open(?:\s+Competition)?)\b/gi
+  const setAsides = uniq(text.match(saRe) ?? [])
+
+  // Contract vehicles
+  const vehRe = /\b(GSA\s+(?:MAS|Multiple Award Schedule|FSS|Federal Supply Schedule)|OASIS\+?(?:\s*SB)?|SEWP\s*(?:V|VI)?|CIO[- ]SP[34]\+?|ALLIANT\s*[23]?|Seaport[- ]?(?:NxG|e)|STARS\s*III|NITAAC|8\(a\)\s*STARS|ENCORE\s*III|VETS2|ITES[- ]3S)\b/gi
+  const vehicles = uniq(text.match(vehRe) ?? [])
+
+  // Dollar amounts
+  const dolRe = /\$[\d,]+(?:\.\d+)?(?:\s*(?:billion|million|thousand|[BMK]))?\b/gi
+  const dollars = uniq(text.match(dolRe) ?? [])
+
+  // Dates — labeled preferred, generic month-name fallback
+  const labelDateRe = /(?:due\s+date|response\s+date|proposals?\s+due|submission\s+deadline|closing\s+date|award\s+date|period\s+of\s+performance)\s*:?\s*((?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}|\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/gi
+  const dates: string[] = []
+  while ((m = labelDateRe.exec(text)) !== null) dates.push(m[1])
+  if (dates.length === 0) {
+    const genericDateRe = /\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}\b/gi
+    dates.push(...(text.match(genericDateRe) ?? []))
+  }
+
+  // Keywords
+  const kwRe = /\b(PWS|SOW|Statement\s+of\s+Work|Statement\s+of\s+Objectives|SOO|Performance\s+Work\s+Statement|LPTA|Best\s+Value|BVTO|FFP|Firm[- ]Fixed[- ]Price|T&M|Time\s+and\s+Materials|CPFF|CPAF|IDIQ|BPA|SBIR|STTR|OTA|Other\s+Transaction|FedRAMP|Top\s+Secret|TS\/SCI|Public\s+Trust|Section\s+508|CMMI|ISO\s+9001|IT\s+[Hh]elp\s+[Dd]esk|[Hh]elp\s+[Dd]esk|[Dd]esktop\s+[Ss]upport|[Tt]icket\s+[Mm]anagement|[Uu]ser\s+[Ss]upport|EHR\s+[Ww]orkflow\s+[Ss]upport|[Cc]ybersecurity\s+[Ss]ervices|[Cc]ybersecurity|[Cc]loud\s+[Mm]igration|[Dd]ata\s+[Ee]ngineering|[Ss]oftware\s+[Dd]evelopment|[Cc]linical\s+[Dd]ocumentation|AI\s+[Gg]overnance|[Pp]redictive\s+[Mm]aintenance|[Ll]ogistics\s+[Oo]ptimization)\b/gi
+  const keywords = uniq(text.match(kwRe) ?? [])
+
+  return {
+    agencies:  uniq(agencies).slice(0, 6),
+    naics:     uniq(naics).slice(0, 4),
+    setAsides: setAsides.slice(0, 5),
+    vehicles:  vehicles.slice(0, 5),
+    dollars:   dollars.slice(0, 8),
+    dates:     uniq(dates).slice(0, 5),
+    keywords:  keywords.slice(0, 8),
+  }
+}
+
+function hasEvidence(ev: ExtractedEvidence): boolean {
+  return Object.values(ev).some(v => v.length > 0)
+}
+
+function buildSourcePayload(
+  raw: string,
+  ev: ExtractedEvidence | null,
+  govcon: boolean,
+): string {
+  if (!govcon || !ev || !hasEvidence(ev)) return raw
+  const lines: string[] = ['[EXTRACTED EVIDENCE]']
+  if (ev.agencies.length)  lines.push(`Agencies: ${ev.agencies.join(', ')}`)
+  if (ev.naics.length)     lines.push(`NAICS: ${ev.naics.join(', ')}`)
+  if (ev.setAsides.length) lines.push(`Set-Asides: ${ev.setAsides.join(', ')}`)
+  if (ev.vehicles.length)  lines.push(`Contract Vehicles: ${ev.vehicles.join(', ')}`)
+  if (ev.dollars.length)   lines.push(`Dollar Amounts: ${ev.dollars.join(', ')}`)
+  if (ev.dates.length)     lines.push(`Key Dates: ${ev.dates.join(', ')}`)
+  if (ev.keywords.length)  lines.push(`Keywords: ${ev.keywords.join(', ')}`)
+  lines.push('[END EXTRACTED EVIDENCE]')
+  const preamble = lines.join('\n') + '\n\n'
+  const budget = 3000 - preamble.length
+  return budget > 0 ? preamble + raw.slice(0, budget) : raw.slice(0, 3000)
+}
+
 export default function GeneratePage() {
   const [topic, setTopic]                   = useState('')
   const [tone, setTone]                     = useState('professional')
   const [audience, setAudience]             = useState('')
   const [sourceMaterial, setSourceMaterial] = useState('')
   const [govconMode, setGovconMode]         = useState(false)
+  const [extractedEvidence, setExtractedEvidence] = useState<ExtractedEvidence | null>(null)
   const [posts, setPosts]       = useState<Record<string, PostState>>(initPosts)
   const [planInfo, setPlanInfo] = useState<PlanInfo>({
     plan: 'free', dailyUsage: 0, dailyLimit: 5, canGenerate: true,
@@ -304,7 +433,7 @@ export default function GeneratePage() {
     const capturedTopic    = topic.trim()
     const capturedTone     = tone
     const capturedAudience = audience.trim()
-    const capturedSource   = sourceMaterial.trim().slice(0, 3000)
+    const capturedSource   = buildSourcePayload(sourceMaterial.trim().slice(0, 3000), extractedEvidence, govconMode)
     const capturedGovcon   = govconMode
 
     setPosts(Object.fromEntries(FORMATS.map(f => [f.value, { ...EMPTY_POST, isGenerating: true }])))
@@ -379,7 +508,7 @@ export default function GeneratePage() {
         const res = await fetch('/api/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ topic: topic.trim(), tone, format: formatValue, audience: audience.trim(), sourceMaterial: sourceMaterial.trim().slice(0, 3000), govconMode }),
+          body: JSON.stringify({ topic: topic.trim(), tone, format: formatValue, audience: audience.trim(), sourceMaterial: buildSourcePayload(sourceMaterial.trim().slice(0, 3000), extractedEvidence, govconMode), govconMode }),
         })
         if (!res.ok) {
           const data = await res.json()
@@ -444,7 +573,7 @@ export default function GeneratePage() {
             format: formatValue,
             tone,
             existingContent: originalText,
-            sourceMaterial: sourceMaterial.trim().slice(0, 3000),
+            sourceMaterial: buildSourcePayload(sourceMaterial.trim().slice(0, 3000), extractedEvidence, govconMode),
             govconMode,
           }),
         })
@@ -639,7 +768,7 @@ export default function GeneratePage() {
                 </label>
                 <textarea
                   value={sourceMaterial}
-                  onChange={e => setSourceMaterial(e.target.value)}
+                  onChange={e => { setSourceMaterial(e.target.value); setExtractedEvidence(null) }}
                   placeholder={"Paste SAM.gov opportunity text, USAspending contract data, agency report, capability statement, YouTube transcript, blog article, or client notes…"}
                   className="w-full h-24 px-3.5 py-3 text-sm bg-white/[0.04] border border-white/[0.08] rounded-xl resize-none text-white placeholder-white/20 focus:outline-none focus:ring-1 focus:ring-[#0077b5]/50 focus:border-[#0077b5]/40 transition-all leading-relaxed"
                 />
@@ -653,6 +782,38 @@ export default function GeneratePage() {
                   </p>
                 )}
               </div>
+
+              {/* Extract Evidence button */}
+              {sourceMaterial.trim() && (
+                <button
+                  type="button"
+                  onClick={() => setExtractedEvidence(parseEvidence(sourceMaterial))}
+                  className="text-[10px] font-medium px-2.5 py-1 rounded-lg border border-amber-500/25 text-amber-400/70 bg-amber-500/5 hover:bg-amber-500/10 hover:text-amber-300 hover:border-amber-500/40 transition-all"
+                >
+                  {extractedEvidence ? '↻ Re-extract Evidence' : '⊕ Extract Evidence'}
+                </button>
+              )}
+
+              {/* Evidence Summary panel */}
+              {extractedEvidence && (
+                <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 space-y-1.5">
+                  <p className="text-[9px] font-bold text-amber-400/50 uppercase tracking-widest mb-2">Extracted Evidence</p>
+                  {(
+                    [
+                      { label: 'Agency',    value: extractedEvidence.agencies.join(', ')  || '[not found]' },
+                      { label: 'NAICS',     value: extractedEvidence.naics.join(', ')     || '[not found]' },
+                      { label: 'Set-Aside', value: extractedEvidence.setAsides.join(', ') || '[not found]' },
+                      { label: 'Due Date',  value: extractedEvidence.dates.join(', ')     || '[not found]' },
+                      { label: 'Keywords',  value: extractedEvidence.keywords.join(', ')  || '[not found]' },
+                    ] as { label: string; value: string }[]
+                  ).map(({ label, value }) => (
+                    <div key={label} className="flex gap-2 items-start">
+                      <span className="text-[9px] font-bold text-white/25 uppercase tracking-wider w-16 shrink-0 pt-px">{label}</span>
+                      <span className={`text-[10px] leading-relaxed break-words min-w-0 ${value === '[not found]' ? 'text-white/20 italic' : 'text-white/65'}`}>{value}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* GovCon Data Mode toggle */}
               <button
