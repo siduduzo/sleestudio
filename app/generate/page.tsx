@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { UserButton } from '@clerk/nextjs'
 import { ThemeToggle } from '../components/ThemeToggle'
+import { BrandProfile } from '../components/BrandProfile'
 
 type PlanInfo = {
   plan: 'free' | 'pro'
@@ -979,6 +980,7 @@ export default function GeneratePage() {
               </div>
             </div>
           </div>
+          <BrandProfile />
 
           {/* ── Post Cards Grid + History ── */}
           <div className="min-w-0 space-y-6">
