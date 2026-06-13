@@ -122,7 +122,7 @@ export function BrandProfile() {
       >
         <div className="flex items-center gap-2.5">
           <span className="text-sm">🏛️</span>
-          <span className="text-[10px] font-bold text-white/25 uppercase tracking-widest">My GovCon Brand</span>
+          <span className="text-[10px] font-bold text-white/25 uppercase tracking-widest">My Zoltha Brand</span>
           {hasPreviewContent && !isExpanded && (
             <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/25 text-emerald-400/70">
               saved

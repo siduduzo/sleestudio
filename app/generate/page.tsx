@@ -745,6 +745,9 @@ export default function GeneratePage() {
       <main className="relative z-10 max-w-[1440px] mx-auto px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6 items-start">
 
+          {/* ── Left column: Content Brief + Brand Profile ── */}
+          <div className="space-y-4">
+
           {/* ── Glassmorphism Input Panel ── */}
           <div className="gen-input-panel lg:sticky lg:top-[73px] rounded-2xl border border-white/[0.09] bg-white/[0.02] backdrop-blur-2xl shadow-2xl shadow-black/40 overflow-hidden">
             {/* Panel header accent */}
@@ -981,6 +984,7 @@ export default function GeneratePage() {
             </div>
           </div>
           <BrandProfile />
+          </div>{/* end left column */}
 
           {/* ── Post Cards Grid + History ── */}
           <div className="min-w-0 space-y-6">
