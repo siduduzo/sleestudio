@@ -55,6 +55,7 @@ const CERT_LABELS: { key: keyof Certifications; label: string }[] = [
 export function BrandProfile() {
   const [isExpanded, setIsExpanded]   = useState(false)
   const [data, setData]               = useState<BrandProfileData>(DEFAULT_DATA)
+  const [isSaved, setIsSaved]         = useState(false)
 
   const headshotInputRef = useRef<HTMLInputElement>(null)
   const logoInputRef     = useRef<HTMLInputElement>(null)
@@ -104,6 +105,16 @@ export function BrandProfile() {
       ...prev,
       certifications: { ...prev.certifications, [key]: value },
     }))
+  }
+
+  function handleSave() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+    } catch {
+      // storage quota exceeded
+    }
+    setIsSaved(true)
+    setTimeout(() => setIsSaved(false), 2000)
   }
 
   const activeCerts      = CERT_LABELS.filter(c => data.certifications[c.key])
@@ -334,16 +345,29 @@ export function BrandProfile() {
             </div>
           )}
 
-          {/* Clear profile */}
-          {hasPreviewContent && (
+          {/* Save + Clear */}
+          <div className="flex items-center justify-between pt-1">
             <button
               type="button"
-              onClick={() => setData(DEFAULT_DATA)}
-              className="text-[9px] text-white/15 hover:text-red-400/50 transition-colors"
+              onClick={handleSave}
+              className={`text-[10px] font-medium px-3 py-1.5 rounded-lg border transition-all ${
+                isSaved
+                  ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+                  : 'bg-white/[0.04] border-white/[0.09] text-white/50 hover:bg-emerald-500/10 hover:border-emerald-500/25 hover:text-emerald-400'
+              }`}
             >
-              Clear profile
+              {isSaved ? '✓ Profile saved' : 'Save Profile'}
             </button>
-          )}
+            {hasPreviewContent && (
+              <button
+                type="button"
+                onClick={() => { setData(DEFAULT_DATA); setIsSaved(false) }}
+                className="text-[9px] text-white/15 hover:text-red-400/50 transition-colors"
+              >
+                Clear profile
+              </button>
+            )}
+          </div>
 
         </div>
       )}

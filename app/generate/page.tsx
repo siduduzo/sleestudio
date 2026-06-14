@@ -21,6 +21,13 @@ type HistoryPost = {
   created_at: string
 }
 
+type SlimBrandProfile = {
+  founderName: string
+  founderTitle: string
+  companyName: string
+  logo: string | null
+}
+
 const TONES = [
   { value: 'professional',  label: 'Professional',  emoji: '💼' },
   { value: 'casual',        label: 'Casual',         emoji: '😊' },
@@ -257,6 +264,22 @@ function hasEvidence(ev: ExtractedEvidence): boolean {
   return Object.values(ev).some(v => v.length > 0)
 }
 
+function parseCarouselSlides(text: string): string[] {
+  // "Slide N:" or "#N:" prefix
+  const byLabel = text.split(/\n?(?:Slide\s+\d+|#\d+)[:.]\s*/i).map(s => s.trim()).filter(Boolean)
+  if (byLabel.length >= 2) return byLabel.slice(0, 7)
+  // Numbered list "1." or "1)"
+  const byNumbered = text.split(/\n(?=\d+[.)]\s)/).map(s => s.trim()).filter(Boolean)
+  if (byNumbered.length >= 2) return byNumbered.slice(0, 7)
+  // Double-newline sections
+  const byParagraph = text.split(/\n{2,}/).map(s => s.trim()).filter(Boolean)
+  if (byParagraph.length >= 2) return byParagraph.slice(0, 7)
+  // Fallback: 5 roughly equal word chunks
+  const words = text.split(/\s+/)
+  const size  = Math.ceil(words.length / 5)
+  return Array.from({ length: 5 }, (_, i) => words.slice(i * size, (i + 1) * size).join(' ')).filter(Boolean)
+}
+
 function buildSourcePayload(
   raw: string,
   ev: ExtractedEvidence | null,
@@ -295,11 +318,30 @@ export default function GeneratePage() {
   const [showHistory, setShowHistory]             = useState(false)
   const [history, setHistory]                     = useState<HistoryPost[]>([])
   const [isLoadingHistory, setIsLoadingHistory]   = useState(false)
+  const [carouselBrand, setCarouselBrand] = useState<SlimBrandProfile>({
+    founderName: '', founderTitle: '', companyName: '', logo: null,
+  })
   const abortRef        = useRef<AbortController | null>(null)
   const wasGeneratingRef = useRef(false)
 
   const isAnyGenerating = Object.values(posts).some(p => p.isGenerating || p.isRefining)
   const hasAnyContent   = Object.values(posts).some(p => p.text || p.error)
+
+  // Read brand profile from localStorage for carousel preview
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('zoltha_brand_profile')
+      if (stored) {
+        const p = JSON.parse(stored) as Partial<SlimBrandProfile>
+        setCarouselBrand({
+          founderName:  p.founderName  ?? '',
+          founderTitle: p.founderTitle ?? '',
+          companyName:  p.companyName  ?? '',
+          logo:         p.logo         ?? null,
+        })
+      }
+    } catch {}
+  }, [])
 
   // Fetch real usage count from Supabase on mount
   useEffect(() => {
@@ -998,6 +1040,9 @@ export default function GeneratePage() {
                   ? 'text-amber-400'
                   : 'text-emerald-400'
               const hasContent = !!(post.text || post.error)
+              const slides = format.value === 'carousel_brief' && post.text && !post.isGenerating && !post.isRefining
+                ? parseCarouselSlides(post.text)
+                : []
 
               return (
                 <div
@@ -1108,13 +1153,58 @@ export default function GeneratePage() {
 
                     {/* Post text */}
                     {post.text && (
-                      <div className="flex-1 text-sm text-white/90 leading-[1.85] whitespace-pre-wrap">
+                      <div className={`${format.value !== 'carousel_brief' ? 'flex-1 ' : ''}text-sm text-white/90 leading-[1.85] whitespace-pre-wrap`}>
                         {post.text}
                         {(post.isGenerating || post.isRefining) && (
                           <span
                             className={`inline-block w-[3px] h-[0.95em] ml-0.5 align-middle animate-pulse rounded-sm ${format.cursor}`}
                           />
                         )}
+                      </div>
+                    )}
+
+                    {/* Carousel slide preview */}
+                    {slides.length > 0 && (
+                      <div className="mt-3 space-y-1.5">
+                        <p className="text-[9px] font-bold text-orange-400/50 uppercase tracking-widest">
+                          Slide Preview · {slides.length} slides
+                        </p>
+                        <div className="flex gap-2.5 overflow-x-auto pb-2">
+                          {slides.map((slide, i) => (
+                            <div
+                              key={i}
+                              className="shrink-0 w-44 h-56 flex flex-col rounded-xl border border-orange-500/20 bg-gradient-to-b from-orange-600/6 to-black/20 overflow-hidden"
+                            >
+                              {/* Slide header: logo + slide number */}
+                              <div className="flex items-center justify-between px-3 pt-3 pb-1.5">
+                                {carouselBrand.logo ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={carouselBrand.logo} alt="" className="w-5 h-5 rounded object-contain" />
+                                ) : (
+                                  <span className="w-5 h-5 rounded bg-orange-500/15 flex items-center justify-center text-[7px] font-bold text-orange-400/60">
+                                    {(carouselBrand.companyName || carouselBrand.founderName || '?')[0]?.toUpperCase()}
+                                  </span>
+                                )}
+                                <span className="text-[8px] font-mono text-orange-400/35">{i + 1}/{slides.length}</span>
+                              </div>
+                              {/* Slide content */}
+                              <div className="flex-1 px-3 overflow-hidden">
+                                <p className="text-[10px] leading-relaxed text-white/65">{slide}</p>
+                              </div>
+                              {/* Slide footer: founder / company */}
+                              {(carouselBrand.founderName || carouselBrand.companyName) && (
+                                <div className="px-3 py-2 border-t border-white/[0.05]">
+                                  {carouselBrand.founderName && (
+                                    <p className="text-[8px] font-medium text-white/35 truncate">{carouselBrand.founderName}</p>
+                                  )}
+                                  {carouselBrand.companyName && (
+                                    <p className="text-[8px] text-white/20 truncate">{carouselBrand.companyName}</p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
 
