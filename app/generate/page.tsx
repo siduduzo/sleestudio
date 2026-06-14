@@ -745,8 +745,11 @@ export default function GeneratePage() {
       <main className="relative z-10 max-w-[1440px] mx-auto px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6 items-start">
 
+          {/* ── Left column: Content Brief + Brand Profile ── */}
+          <div className="space-y-4">
+
           {/* ── Glassmorphism Input Panel ── */}
-          <div className="gen-input-panel lg:sticky lg:top-[73px] rounded-2xl border border-white/[0.09] bg-white/[0.02] backdrop-blur-2xl shadow-2xl shadow-black/40 overflow-hidden">
+          <div className="gen-input-panel lg:sticky lg:top-[73px] rounded-2xl border border-white/[0.09] bg-white/[0.02] backdrop-blur-2xl shadow-2xl shadow-black/40">
             {/* Panel header accent */}
             <div className="h-px bg-gradient-to-r from-transparent via-[#0077b5]/50 to-transparent" />
 
@@ -981,10 +984,11 @@ export default function GeneratePage() {
             </div>
           </div>
           <BrandProfile />
+          </div>{/* end left column */}
 
           {/* ── Post Cards Grid + History ── */}
           <div className="min-w-0 space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {FORMATS.map(format => {
               const post      = posts[format.value]
               const charCount = post.text.length
@@ -998,7 +1002,7 @@ export default function GeneratePage() {
               return (
                 <div
                   key={format.value}
-                  className={`gen-post-card group rounded-2xl border ${format.border} ${format.hoverBorder} bg-gradient-to-b ${format.glow} to-transparent bg-[var(--card-bg)] transition-all duration-300 ${format.glowShadow} hover:-translate-y-0.5 flex flex-col min-h-64`}
+                  className={`gen-post-card group rounded-2xl border ${format.border} ${format.hoverBorder} bg-gradient-to-b ${format.glow} to-transparent bg-[var(--card-bg)] transition-all duration-300 ${format.glowShadow} hover:-translate-y-0.5 flex flex-col min-h-64${format.value === 'carousel_brief' ? ' xl:col-span-3' : ''}`}
                 >
                   {/* Card top accent line */}
                   <div
