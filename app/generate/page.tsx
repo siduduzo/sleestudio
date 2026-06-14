@@ -988,7 +988,7 @@ export default function GeneratePage() {
 
           {/* ── Post Cards Grid + History ── */}
           <div className="min-w-0 space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {FORMATS.map(format => {
               const post      = posts[format.value]
               const charCount = post.text.length
@@ -1002,7 +1002,7 @@ export default function GeneratePage() {
               return (
                 <div
                   key={format.value}
-                  className={`gen-post-card group rounded-2xl border ${format.border} ${format.hoverBorder} bg-gradient-to-b ${format.glow} to-transparent bg-[var(--card-bg)] transition-all duration-300 ${format.glowShadow} hover:-translate-y-0.5 flex flex-col min-h-64`}
+                  className={`gen-post-card group rounded-2xl border ${format.border} ${format.hoverBorder} bg-gradient-to-b ${format.glow} to-transparent bg-[var(--card-bg)] transition-all duration-300 ${format.glowShadow} hover:-translate-y-0.5 flex flex-col min-h-64${format.value === 'carousel_brief' ? ' xl:col-span-3' : ''}`}
                 >
                   {/* Card top accent line */}
                   <div
