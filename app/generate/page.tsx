@@ -749,7 +749,7 @@ export default function GeneratePage() {
           <div className="space-y-4">
 
           {/* ── Glassmorphism Input Panel ── */}
-          <div className="gen-input-panel lg:sticky lg:top-[73px] rounded-2xl border border-white/[0.09] bg-white/[0.02] backdrop-blur-2xl shadow-2xl shadow-black/40 overflow-hidden">
+          <div className="gen-input-panel lg:sticky lg:top-[73px] rounded-2xl border border-white/[0.09] bg-white/[0.02] backdrop-blur-2xl shadow-2xl shadow-black/40">
             {/* Panel header accent */}
             <div className="h-px bg-gradient-to-r from-transparent via-[#0077b5]/50 to-transparent" />
 
